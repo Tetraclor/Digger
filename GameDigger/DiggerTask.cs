@@ -50,7 +50,15 @@ namespace GameDigger
         }
     }
 
-    public static class PlayerCommand
+    public class Player
+    {
+        public PlayerCommand GetCommand(GameState gameState)
+        {
+            
+        }
+    }
+
+    public class PlayerCommand
     {
         public static DiggerMove Move = DiggerMove.None;
     }

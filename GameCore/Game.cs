@@ -38,7 +38,6 @@ namespace GameCore
                             Command = command,
                             Creature = creature,
                             Location = new Point(x, y),
-                            DrawLocation = new Point(x * 40, y * 40),
                             TargetLogicalLocation = new Point(x + command.DeltaX, y + command.DeltaY)
                         });
                 }
