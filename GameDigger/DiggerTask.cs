@@ -1,4 +1,5 @@
 ﻿using GameCore;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
@@ -27,7 +28,12 @@ namespace GameDigger
     {
         public CreatureCommand Act(GameState game, int x, int y)
         {
-            var command = CommandHelper.playerCommandToCreatureComand[PlayerCommand.Move];
+            var playerCommand = (PlayerCommand)game.GetPlayerCommandOrNull(this);
+
+            if (playerCommand == null)
+                return CommandHelper.NoneCommand;
+
+            var command = CommandHelper.playerCommandToCreatureComand[playerCommand.Move];
 
             var targetPoint = new Point(x + command.DeltaX, y + command.DeltaY);
             var creatureInTargePoint = game.GetCreatureOrNull(targetPoint);
@@ -50,29 +56,41 @@ namespace GameDigger
         }
     }
 
-    public class Player
+    public abstract class Player : IPlayer
     {
-        public PlayerCommand GetCommand(GameState gameState)
-        {
-            
-        }
+        public abstract IPlayerCommand GetCommand(IReadOnlyGameState gameState);
     }
 
-    public class PlayerCommand
+    public class PlayerCommand : IPlayerCommand 
     {
-        public static DiggerMove Move = DiggerMove.None;
+        public DiggerMove Move { get; set; } = DiggerMove.None;
     }
 
     public enum DiggerMove
     {
-        None, Left, Rigth, Up, Down
+        None, Left, Right, Up, Down
+    }
+
+    public class BotPlayer : Player
+    {
+        static Random _R = new Random();
+        static T RandomEnumValue<T>()
+        {
+            var v = Enum.GetValues(typeof(T));
+            return (T)v.GetValue(_R.Next(v.Length));
+        }
+
+        public override IPlayerCommand GetCommand(IReadOnlyGameState gameState)
+        {
+            return new PlayerCommand() { Move = RandomEnumValue<DiggerMove>() };
+        }
     }
 
     public static class CommandHelper
     {
         public static Dictionary<DiggerMove, CreatureCommand> playerCommandToCreatureComand = new Dictionary<DiggerMove, CreatureCommand>()
         {
-            [DiggerMove.Rigth] = new CreatureCommand { DeltaX = 1 },
+            [DiggerMove.Right] = new CreatureCommand { DeltaX = 1 },
             [DiggerMove.Left] = new CreatureCommand { DeltaX = -1 },
             [DiggerMove.Up] = new CreatureCommand { DeltaY = -1},
             [DiggerMove.Down] = new CreatureCommand { DeltaY = 1},

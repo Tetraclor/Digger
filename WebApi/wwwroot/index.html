@@ -1,0 +1,149 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>SignalR Chat - Metanit.com</title>
+    <style>
+        body {
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+			flex-direction: column;
+			
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            background-color: beige;
+            font-family: Consolas;
+        }
+
+        #game-board {
+            background-color: #CCC;
+            width: 100vmin;
+            height: 100vmin;
+            display: grid;
+            grid-template-rows: repeat(21, 1fr);
+            grid-template-columns: repeat(21, 1fr);
+        }
+    </style>
+</head>
+<body>
+    <div id="nav">
+        <div id="inputForm">
+            <textarea id="bot_script" cols="40" rows="5">
+export function tick() {
+    console.log('hello'); 
+};</textarea>
+            <input type="button" id="startBtn" value="Запустить игру" onclick="start_game()" />
+            <input type="button" id="stopBtn" value="Остановить игру" onclick="stop_game()" />
+        </div>
+        <div id="tick"></div>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <script src="js/signalr/dist/browser/signalr.min.js"></script>
+	
+    <script>
+        var bot;
+        var user_command;
+
+        document.addEventListener('keydown', function (e) {
+            if (e.keyCode == '38') {
+                window.user_command = 'up';
+            }
+            else if (e.keyCode == '40') {
+                window.user_command = 'down';
+            }
+            else if (e.keyCode == '37') {
+                window.user_command = 'left';
+            }
+            else if (e.keyCode == '39') {
+                window.user_command = 'right';
+            }
+        });
+
+        async function doimport() {
+            var moduleData = document.getElementById("bot_script");
+            console.log(moduleData);
+            var b64moduleData = "data:text/javascript;base64," + btoa(moduleData);
+            window.bot = await import(b64moduleData);
+			window.bot.tick();
+        }
+
+        const hubConnection = new signalR.HubConnectionBuilder()
+            .withUrl("/hub")
+            .build();
+
+        hubConnection.on("Receive", function (data, tick) {
+            document.getElementById("tick").innerText = tick;
+            var command = bot_act();
+            hubConnection.invoke("SendTurn", command);
+            draw_board(data);
+        });
+
+        function start_game() {
+            //doimport();
+            hubConnection.invoke("StartGame");
+        }
+
+        function stop_game() {
+            hubConnection.invoke("StopGame");
+        }
+
+        var canvas = document.getElementById('canvas');
+        var ctx = canvas.getContext('2d');
+
+        var image = new Image();   // Размер изображения
+       // image.onload = drawImageActualSize; // Рисуем изображение, когда оно будет загружено
+
+        var images = {
+            "D": "/Images/Digger.png",
+            "T": "/Images/Terrain.png"
+        };
+
+        images["D"] = new Image();
+        images["T"] = new Image();
+
+        images["D"].src = '/Images/Digger.png';
+        images["T"].src = "/Images/Terrain.png";
+		
+		function bot_act(){
+            // window.bot.tick();
+            
+            var temp = window.user_command;
+            window.user_command = null;
+            console.log(temp);
+            return temp;
+		}
+
+        function draw_board(data) {
+            // use the intrinsic size of image in CSS pixels for the canvas element
+            var size = 32;
+
+            var rows = data.split('\n');
+
+            canvas.width = rows[0].length * size;
+            canvas.height = rows.length * size;
+
+            ctx.fillStyle = "rgb(0,0,0)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            for (var y = 0; y < rows.length; y++) {
+                var row = rows[y];
+  
+                for (var x = 0; x < row.length; x++) {
+                    var image = images[row[x]];
+                    if (image === undefined) continue;
+                    ctx.drawImage(image, x * size, y * size);
+                }
+            }
+            
+        }
+        eval();
+
+        hubConnection.start();
+
+    </script>
+</body>
+</html>

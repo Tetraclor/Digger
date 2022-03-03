@@ -1,13 +1,15 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net5.0-windows</TargetFramework>
-    <UseWindowsForms>true</UseWindowsForms>
+    <TargetFramework>net5.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="RestSharp" Version="107.3.0" />
+    <Content Remove="wwwroot\Images\Digger.png" />
+    <Content Remove="wwwroot\Images\Gold.png" />
+    <Content Remove="wwwroot\Images\Monster.png" />
+    <Content Remove="wwwroot\Images\Sack.png" />
+    <Content Remove="wwwroot\Images\Terrain.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -17,25 +19,23 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="DiggerWindow.cs">
-      <SubType>Form</SubType>
-    </Compile>
+    <Folder Include="wwwroot\js\" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Images\Digger.png">
+    <None Include="wwwroot\Images\Digger.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Images\Gold.png">
+    <None Include="wwwroot\Images\Gold.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Images\Monster.png">
+    <None Include="wwwroot\Images\Monster.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Images\Sack.png">
+    <None Include="wwwroot\Images\Sack.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Images\Terrain.png">
+    <None Include="wwwroot\Images\Terrain.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

@@ -8,7 +8,6 @@ namespace GameCore
 {
     public class Game
     {
-
         public List<CreatureTransformation> Animations = new List<CreatureTransformation>();
 
         public GameState GameState { get; }
@@ -20,6 +19,14 @@ namespace GameCore
 
         public void BeginAct()
         {
+            var players = GameState.Players;
+            GameState.PlayersCommands = new Dictionary<IPlayer, IPlayerCommand>();
+
+            foreach(var player in players)
+            {
+                GameState.PlayersCommands[player] = player.GetCommand(GameState);
+            }
+
             Animations.Clear();
             for (var x = 0; x < GameState.MapWidth; x++)
                 for (var y = 0; y < GameState.MapHeight; y++)
