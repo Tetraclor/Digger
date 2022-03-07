@@ -35,6 +35,9 @@ namespace GameCore
                     if (creature == null) continue;
                     var command = creature.Act(GameState, x, y);
 
+                    if (command == null)
+                        command = new CreatureCommand();
+
                     if (x + command.DeltaX < 0 || x + command.DeltaX >= GameState.MapWidth || y + command.DeltaY < 0 ||
                         y + command.DeltaY >= GameState.MapHeight)
                         throw new Exception($"The object {creature.GetType()} falls out of the game field");

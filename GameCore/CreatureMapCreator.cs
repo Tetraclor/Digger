@@ -30,6 +30,18 @@ namespace GameCore
             return result;
         }
 
+        public static ICreature[,] CreateMap(int width, int height, Assembly assembly, Func<char, string> charToClassName = null, string separator = "\r\n")
+        {
+            CreatureMapCreator.assembly = assembly;
+            charToClassName ??= CharToClassName;
+
+            var result = new ICreature[width, height];
+            for (var x = 0; x < width; x++)
+                for (var y = 0; y < height; y++)
+                    result[x, y] = CreateCreatureBySymbol(' ', charToClassName);
+            return result;
+        }
+
         public static string MapToString(this ICreature[,] map)
         {
             var w = map.GetLength(0);

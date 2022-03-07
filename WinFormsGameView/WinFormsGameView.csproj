@@ -7,6 +7,27 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Images\Apple.png" />
+    <None Remove="Images\BodySnake.png" />
+    <None Remove="Images\HeadSnake.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Images\Apple.png">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Images\BodySnake.png">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Images\HeadSnake.png">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="RestSharp" Version="107.3.0" />
   </ItemGroup>
 
@@ -14,10 +35,11 @@
     <ProjectReference Include="..\Common\Common.csproj" />
     <ProjectReference Include="..\GameCore\GameCore.csproj" />
     <ProjectReference Include="..\GameDigger\GameDigger.csproj" />
+    <ProjectReference Include="..\GameSnake\GameSnake.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="DiggerWindow.cs">
+    <Compile Update="GameWindow.cs">
       <SubType>Form</SubType>
     </Compile>
   </ItemGroup>

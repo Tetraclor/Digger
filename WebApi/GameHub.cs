@@ -1,4 +1,6 @@
-﻿using GameCore;
+﻿using Common;
+using GameCore;
+using GameSnake;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using System;
@@ -11,47 +13,49 @@ namespace WebApi
 {
     public class GameHub : Hub
     {
+        int GameTickMs = 300;
+
+        static System.Timers.Timer timer = new System.Timers.Timer();
+        static RemotePlayer remotePlayer = new RemotePlayer();
+        static IPlayer randomBotPlayer = new ListBotPlayer(FourDirMove.Down, FourDirMove.Left);
+        static GameService gameService = new SnakeGameService(10, 10);
+       // static GameService gameService = new DiggerGameService(DiggerGameService.mapWithPlayerTerrain);
+
+        IHubContext<GameHub> hubContext { get; }
 
         public GameHub(IHubContext<GameHub> hubContext)
         {
             this.hubContext = hubContext;
         }
 
-        static System.Timers.Timer timer = new System.Timers.Timer();
-        static RemotePlayer remotePlayer;
-        IHubContext<GameHub> hubContext { get; }
-
         public void SendTurn(string command)
         {
             if (command == null)
                 return;
-           
-            var diggerMove = Enum.Parse<GameDigger.DiggerMove>(command, true);
-            remotePlayer.PlayerCommand = new GameDigger.PlayerCommand() { Move = diggerMove };
+
+            var playerCommand = gameService.ParsePlayerCommand(command);
+            remotePlayer.PlayerCommand = playerCommand;  
         }
 
         public void StartGame()
         {
             remotePlayer = new RemotePlayer();
-            var creature = GameService.GameState.Map[2, 1]; 
-            GameService.GameState.AddPlayer(remotePlayer, creature);
+            gameService.AddPlayer(randomBotPlayer);
 
             timer.Stop();
             timer = new System.Timers.Timer();
-            var tick = 0;
 
-            timer.Elapsed += aTimer_Elapsed;
-            timer.Interval = 100;
+            timer.Elapsed += (o, e) => aTimer_Elapsed();
+            timer.Interval = GameTickMs;
             timer.Enabled = true;
 
-            void aTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+            aTimer_Elapsed();
+
+            void aTimer_Elapsed()
             {
-                GameService.Game.BeginAct();
-                GameService.Game.EndAct();
-
-                var stringMap = GameService.GameState.Map.MapToString();
-
-                hubContext.Clients.All.SendAsync("Receive", stringMap, tick++);
+                gameService.MakeGameTick();
+                var stringMap = gameService.GameState.Map.MapToString();
+                hubContext.Clients.All.SendAsync("Receive", stringMap, gameService.CurrentTick);
             }
         }
 

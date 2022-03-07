@@ -20,7 +20,6 @@ namespace GameCore
 
         public GameState()
         {
-
         }
 
         public GameState(ICreature[,] map)
@@ -55,7 +54,6 @@ namespace GameCore
             return command;
         }
     }
-
 
     public interface IPlayer
     {

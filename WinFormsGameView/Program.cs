@@ -19,7 +19,7 @@ namespace WinFormsGameView
             //Application.SetHighDpiMode(HighDpiMode.SystemAware);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new DiggerWindow());
+            Application.Run(new GameWindow());
         }
     }
 }

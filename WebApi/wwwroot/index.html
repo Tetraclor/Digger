@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <title>SignalR Chat - Metanit.com</title>
+    <title>Game Bot Arena</title>
     <style>
         body {
             height: 100vh;
@@ -71,6 +71,15 @@ export function tick() {
 			window.bot.tick();
         }
 
+        function bot_act() {
+            // window.bot.tick();
+
+            var temp = window.user_command;
+            window.user_command = null;
+            console.log(temp);
+            return temp;
+        }
+
         const hubConnection = new signalR.HubConnectionBuilder()
             .withUrl("/hub")
             .build();
@@ -93,29 +102,25 @@ export function tick() {
 
         var canvas = document.getElementById('canvas');
         var ctx = canvas.getContext('2d');
+        var images = get_images();
 
-        var image = new Image();   // Размер изображения
-       // image.onload = drawImageActualSize; // Рисуем изображение, когда оно будет загружено
+        function get_images() {
+            var paths = {
+                "H": "/Images/HeadSnake.png",
+                "B": "/Images/BodySnake.png",
+                "A": "/Images/Apple.png"
+            };
 
-        var images = {
-            "D": "/Images/Digger.png",
-            "T": "/Images/Terrain.png"
-        };
+            var images = {};
 
-        images["D"] = new Image();
-        images["T"] = new Image();
+            for (const [key, value] of Object.entries(paths)) {
+                images[key] = new Image();
+                images[key].src = value;
+            }
 
-        images["D"].src = '/Images/Digger.png';
-        images["T"].src = "/Images/Terrain.png";
+            return images;
+        }
 		
-		function bot_act(){
-            // window.bot.tick();
-            
-            var temp = window.user_command;
-            window.user_command = null;
-            console.log(temp);
-            return temp;
-		}
 
         function draw_board(data) {
             // use the intrinsic size of image in CSS pixels for the canvas element
@@ -124,7 +129,7 @@ export function tick() {
             var rows = data.split('\n');
 
             canvas.width = rows[0].length * size;
-            canvas.height = rows.length * size;
+            canvas.height = (rows.length - 1) * size;
 
             ctx.fillStyle = "rgb(0,0,0)";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -140,7 +145,6 @@ export function tick() {
             }
             
         }
-        eval();
 
         hubConnection.start();
 
