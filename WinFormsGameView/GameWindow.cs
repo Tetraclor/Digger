@@ -18,12 +18,12 @@ namespace WinFormsGameView
        // private GameService gameService = new DiggerGameService(DiggerGameService.mapWithPlayerTerrain);
         private GameService gameService = new SnakeGameService(10, 10);
 
-        private readonly Dictionary<string, Bitmap> bitmaps = new Dictionary<string, Bitmap>();
+
         private readonly HashSet<Keys> pressedKeys = new HashSet<Keys>();
-        private int animationTickCount;
+
 
         private UserPlayer userPlayer = new UserPlayer();
-        private List<CreatureTransformation> Transformations = new List<CreatureTransformation>();
+
         private int MapWidth;
         private int MapHeight;
 
@@ -34,18 +34,13 @@ namespace WinFormsGameView
             StartGame(LocalGameTimerTick);
         }
 
-        void InitForm(int MapWidth, int MapHeight, DirectoryInfo imagesDirectory = null) 
+        void InitForm(int MapWidth, int MapHeight) 
         {
             ClientSize = new Size(
                     ElementSize * MapWidth,
                     ElementSize * MapHeight + ElementSize);
 
             FormBorderStyle = FormBorderStyle.FixedDialog;
-            if (imagesDirectory == null)
-                imagesDirectory = new DirectoryInfo("../../../Images");
-
-            foreach (var e in imagesDirectory.GetFiles("*.png"))
-                bitmaps[e.Name] = (Bitmap)Image.FromFile(e.FullName);
         }
 
         void InitLocalGame()
@@ -54,6 +49,7 @@ namespace WinFormsGameView
             MapHeight = gameService.GameState.MapHeight; 
 
             var bot = ListBotPlayer.DownLeft;
+            var randomBot = new RandomBotPlayer();
             gameService.AddPlayer(userPlayer);
         }
 
@@ -84,51 +80,103 @@ namespace WinFormsGameView
             userPlayer.PressedKey = pressedKeys.Any() ? pressedKeys.Min() : Keys.None;
         }
 
-        List<GameCore.Point> drawPoints = new List<GameCore.Point>();
-
         protected override void OnPaint(PaintEventArgs e)
         {
             e.Graphics.TranslateTransform(0, ElementSize);
             e.Graphics.FillRectangle(
                 Brushes.Black, 0, 0, ElementSize * MapWidth, ElementSize * MapHeight);
 
-            for (int i = 0; i < Transformations.Count; i++)
+            for (int i = 0; i < CreatureAnimation.Animations.Count; i++)
             {
-                var a = Transformations[i];
-                var sprite = bitmaps[CreatureImageNameGetter.Get((dynamic)a.Creature)];
-                var drawLocation = drawPoints[i];
-                e.Graphics.DrawImage(sprite, drawLocation.X, drawLocation.Y);
+                var a = CreatureAnimation.Animations[i];
+                e.Graphics.DrawImage(a.Sprite, a.DrawLocation);
             }
 
             e.Graphics.ResetTransform();
            // e.Graphics.DrawString(GameState.Scores.ToString(), new Font("Arial", 16), Brushes.Green, 0, 0);
         }
 
-        int animationTickLength = 32;
-
-        private void MapToAnimation()
+        public class CreatureAnimation
         {
-            var size = ElementSize;
-            var d = (size / animationTickLength) * (animationTickCount + 1);
-            drawPoints.Clear();
+            public static readonly Dictionary<string, Bitmap> bitmaps = new Dictionary<string, Bitmap>();
 
-            foreach (var a in Transformations)
+            public static List<CreatureAnimation> Animations = new();
+
+            public static int AnimationTickLength = 32;
+            public static int AnimationTickCount = 0;
+            public static int SpriteSize = ElementSize;
+
+            public static int AnimationDelta { private set; get; }
+
+            static CreatureAnimation()
             {
-                var temp = new GameCore.Point(a.Location.X * size + d * a.Command.DeltaX, a.Location.Y * size + d * a.Command.DeltaY);
-                drawPoints.Add(temp);
+                var imagesDirectory = new DirectoryInfo("../../../Images");
+
+                foreach (var e in imagesDirectory.GetFiles("*.png"))
+                    bitmaps[e.Name] = (Bitmap)Image.FromFile(e.FullName);
+            }
+
+
+            public Bitmap Sprite;
+            public System.Drawing.Point DrawLocation;
+
+            public GameCore.Point Location;
+            public int DeltaX;
+            public int DeltaY;
+
+            public CreatureAnimation(CreatureTransformation transformation)
+            {
+                Sprite = bitmaps[CreatureImageNameGetter.Get((dynamic)transformation.Creature)];
+                DeltaX = transformation.Command.DeltaX;
+                DeltaY = transformation.Command.DeltaY;
+                Location = transformation.Location;
+            }
+
+            public static void Tick(int mapWitdh, int mapHeight)
+            {
+                AnimationTickCount++;
+                AnimationDelta = (ElementSize / AnimationTickLength) * (AnimationTickCount + 1);
+
+                foreach (var animation in Animations)
+                {
+                    var location = animation.Location;
+                    var deltaX = animation.DeltaX;
+                    var deltaY = animation.DeltaY;
+
+                    var temp = new System.Drawing.Point(
+                        location.X * SpriteSize + AnimationDelta * deltaX,
+                        location.Y * SpriteSize + AnimationDelta * deltaY);
+
+                    if (Math.Abs(deltaX) == mapWitdh - 1 ||
+                        Math.Abs(deltaY) == mapHeight - 1) //Телепортация с конца на другой конец
+                    {
+                        var xs = -Math.Sign(deltaX);
+                        var ys = -Math.Sign(deltaY);
+
+                        temp = new System.Drawing.Point(
+                            location.X * SpriteSize + AnimationDelta * xs, 
+                            location.Y * SpriteSize + AnimationDelta * ys);
+                    }
+
+                    animation.DrawLocation = temp;
+                }
+
+                if (AnimationTickCount == AnimationTickLength) AnimationTickCount = 0;
             }
         }
 
         private void LocalGameTimerTick(object sender, EventArgs args)
         {
-            if (animationTickCount == 0)
+            if (CreatureAnimation.AnimationTickCount == 0)
+            {
                 gameService.MakeGameTick();
 
-            Transformations = gameService.Game.Animations;
-            MapToAnimation();
-
-            animationTickCount++;
-            if (animationTickCount == animationTickLength) animationTickCount = 0;
+                CreatureAnimation.Animations = gameService.Game.Animations
+                    .Select(v => new CreatureAnimation(v))
+                    .ToList();
+            }
+               
+            CreatureAnimation.Tick(gameService.GameState.MapWidth, gameService.GameState.MapHeight);
 
             Invalidate();
         }

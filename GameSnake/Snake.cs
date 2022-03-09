@@ -51,7 +51,7 @@ namespace GameSnake
             var last = Tail.Last();
             var newTailItem = new BodySnake(this, last.PrevPoint);
             Tail.Add(newTailItem);
-            Game.GameState.SetCreature(newTailItem.Point, newTailItem);
+            Game.CreateCreature(newTailItem.Point, newTailItem);
         }
 
         public void CutTail(BodySnake fromThis)
@@ -61,6 +61,7 @@ namespace GameSnake
 
             for (int i = index; i < Tail.Count; i++)
             {
+                Game.DeleteCreature(Tail[i].Point);
                 Tail[i].IsDead = true;
             }
             Tail.RemoveRange(index, Tail.Count - index);

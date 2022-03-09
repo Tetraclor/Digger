@@ -11,7 +11,7 @@ namespace GameSnake
 
         public SnakeGameService(int width, int height) : base(width, height, typeof(HeadSnake))
         {
-            var appleManager = new ApplesManager(Game, 10);
+            var appleManager = new ApplesManager(Game, 30);
         }
 
         public override bool AddPlayer(IPlayer player)
@@ -44,7 +44,8 @@ namespace GameSnake
 
             snake.Tick(GameState);
 
-            base.MakeGameTick();
+            Game.BeginAct();
+            Game.EndAct();
         }
     }
 }
