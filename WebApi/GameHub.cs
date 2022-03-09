@@ -17,7 +17,8 @@ namespace WebApi
 
         static System.Timers.Timer timer = new System.Timers.Timer();
         static RemotePlayer remotePlayer = new RemotePlayer();
-        static IPlayer randomBotPlayer = new ListBotPlayer(FourDirMove.Down, FourDirMove.Left);
+        static IPlayer listBotPlayer = new ListBotPlayer(FourDirMove.Down, FourDirMove.Left);
+        static IPlayer randomBotPlayer = new RandomBotPlayer(42);
         static GameService gameService = new SnakeGameService(10, 10);
         //static GameService gameService = new DiggerGameService(DiggerGameService.mapWithPlayerTerrain);
 
@@ -40,7 +41,7 @@ namespace WebApi
         public void StartGame()
         {
             remotePlayer = new RemotePlayer();
-            gameService.AddPlayer(remotePlayer);
+            gameService.AddPlayer(randomBotPlayer);
 
             timer.Stop();
             timer = new System.Timers.Timer();

@@ -10,6 +10,9 @@ namespace GameCore
     {
         public List<CreatureTransformation> Animations = new List<CreatureTransformation>();
 
+
+        public List<ICreature>[,] Candidates;
+
         public GameState GameState { get; }
 
         public Game(GameState gameState)
@@ -17,16 +20,15 @@ namespace GameCore
             GameState = gameState;
         }
 
-        private Dictionary<Point, List<ICreature>> NewObjects = new ();
-
         public void CreateCreature(Point point, ICreature creature)
         {
             GameState.SetCreature(point, creature);
+        }
 
-            if (NewObjects.TryGetValue(point, out List<ICreature> value))
-                value.Add(creature);
-            else
-                NewObjects[point] = new List<ICreature>() { creature };
+        public void DeleteCreature(ICreature creature)
+        {
+            if(GameState.CreaturesLocations.TryGetValue(creature, out Point location))
+                DeleteCreature(location);
         }
 
         public void DeleteCreature(Point point)
@@ -44,7 +46,7 @@ namespace GameCore
                 GameState.PlayersCommands[player] = player.GetCommand(GameState);
             }
 
-            NewObjects.Clear();
+            GameState.CreaturesLocations.Clear();
             Animations.Clear();
 
             for (var x = 0; x < GameState.MapWidth; x++)
@@ -52,6 +54,9 @@ namespace GameCore
                 {
                     var creature = GameState.Map[x, y];
                     if (creature == null) continue;
+
+                    GameState.CreaturesLocations[creature] = new Point(x, y);
+
                     var command = creature.Act(GameState, x, y);
 
                     if (command == null)
@@ -76,15 +81,10 @@ namespace GameCore
 
         public void EndAct()
         {
-            var creaturesPerLocation = GetCandidatesPerLocation();
+            Candidates = GetCandidatesPerLocation();
             for (var x = 0; x < GameState.MapWidth; x++)
                 for (var y = 0; y < GameState.MapHeight; y++)
-                    GameState.Map[x, y] = SelectWinnerCandidatePerLocation(creaturesPerLocation[x, y]);
-
-            foreach (var (point, candidates) in NewObjects)
-            {
-                GameState.SetCreature(point, SelectWinnerCandidatePerLocation(candidates));
-            }
+                    GameState.SetCreature(new Point(x, y), SelectWinnerCandidatePerLocation(Candidates[x, y]));
         }
 
         private List<ICreature>[,] GetCandidatesPerLocation()

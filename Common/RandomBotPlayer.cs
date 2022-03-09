@@ -6,8 +6,14 @@ namespace Common
 {
     public class RandomBotPlayer : IPlayer
     {
-        static Random _R = new Random();
-        static T RandomEnumValue<T>()
+        Random _R;
+
+        public RandomBotPlayer(int seed)
+        {
+            _R = new Random(seed);
+        }
+
+        T RandomEnumValue<T>()
         {
             var v = Enum.GetValues(typeof(T));
             return (T)v.GetValue(_R.Next(v.Length));

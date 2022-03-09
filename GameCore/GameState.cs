@@ -11,6 +11,7 @@ namespace GameCore
         public List<IPlayer> Players = new List<IPlayer>();
         public Dictionary<IPlayer, IPlayerCommand> PlayersCommands = new Dictionary<IPlayer, IPlayerCommand>();
         public Dictionary<ICreature, IPlayer> PlayersCreatures = new Dictionary<ICreature, IPlayer>();
+        public Dictionary<ICreature, Point> CreaturesLocations = new Dictionary<ICreature, Point>();
         public readonly ICreature[,] Map;
         public int Scores { get; set; }
         public bool IsOver { get; set; }
@@ -31,6 +32,8 @@ namespace GameCore
 
         public void SetCreature(Point point, ICreature creature)
         {
+            if(creature != null)
+                CreaturesLocations[creature] = point;
             Map[point.X, point.Y] = creature;
         }
 

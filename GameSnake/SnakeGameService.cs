@@ -16,7 +16,7 @@ namespace GameSnake
 
         public override bool AddPlayer(IPlayer player)
         {
-            snake = new Snake(new Point(4, 4), new Point(4, 3), new Point(3, 3));
+            snake = new Snake(new Point(4, 4), new Point(4, 3));
             snake.AddToGame(Game);
 
             this.player = player;
@@ -41,8 +41,6 @@ namespace GameSnake
                 playerMove = (playerCommand as PlayerCommand).Move;           
 
             snake.Move(playerMove, GameState);
-
-            snake.Tick(GameState);
 
             Game.BeginAct();
             Game.EndAct();

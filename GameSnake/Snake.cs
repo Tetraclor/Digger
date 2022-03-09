@@ -17,6 +17,7 @@ namespace GameSnake
         public Snake(Point head, params Point[] tail)
         {
             Head = new HeadSnake(this, head);
+            Head.PrevPoint = tail.FirstOrDefault();
             foreach (var point in tail)
             {
                 Tail.Add(new BodySnake(this, point));
@@ -61,7 +62,7 @@ namespace GameSnake
 
             for (int i = index; i < Tail.Count; i++)
             {
-                Game.DeleteCreature(Tail[i].Point);
+                Game.DeleteCreature(Tail[i]);
                 Tail[i].IsDead = true;
             }
             Tail.RemoveRange(index, Tail.Count - index);
@@ -69,6 +70,18 @@ namespace GameSnake
 
         private void Move(Point target)
         {
+            var creature = this.Game.GameState.GetCreatureOrNull(target);
+
+            if (creature is Apple apple)
+            {
+                AddTailItem();
+                apple.ApplesManager.AppleDead(apple);
+            }
+            else if (Tail.Contains(creature))
+            {
+                CutTail((BodySnake)creature);
+            }
+
             Head.PrevPoint = Head.Point;
             Head.Point = target;
 
@@ -80,28 +93,6 @@ namespace GameSnake
                 item.Point = temp;
                 temp = item.PrevPoint;
             }
-        }
-
-        public void Tick(GameState game)
-        {
-        }
-
-        public bool HeadConflict(HeadSnake ownHead, ICreature creature)
-        {
-            if(creature is Apple)
-            {
-                AddTailItem();
-            }
-            return false;
-        }
-
-        public bool BodyConflict(BodySnake ownBody, ICreature creature)
-        {
-            if(creature == Head)
-            {
-                CutTail(ownBody);
-            }
-            return ownBody.IsDead;
         }
     }
 
@@ -120,7 +111,7 @@ namespace GameSnake
 
         public CreatureCommand Act(GameState game, int x, int y) => PrevPoint.ToCreatureCommand(Point);
 
-        public bool DeadInConflict(ICreature conflictedObject) => Snake.HeadConflict(this, conflictedObject);
+        public bool DeadInConflict(ICreature conflictedObject) => false;
 
         public int TransformPriority() => 1;
     }
@@ -138,9 +129,12 @@ namespace GameSnake
             Point = point;
         }
 
-        public CreatureCommand Act(GameState game, int x, int y) => PrevPoint.ToCreatureCommand(Point);
+        public CreatureCommand Act(GameState game, int x, int y) => 
+            IsDead ? 
+            new CreatureCommand()  :
+            PrevPoint.ToCreatureCommand(Point);
 
-        public bool DeadInConflict(ICreature conflictedObject) => Snake.BodyConflict(this, conflictedObject);
+        public bool DeadInConflict(ICreature conflictedObject) => IsDead;
 
         public int TransformPriority() => 1;
     }
@@ -171,12 +165,10 @@ namespace GameSnake
             }
         }
 
-        public void ApplesDead(Apple apple)
+        public void AppleDead(Apple apple)
         {
             if (apples.Contains(apple) == false) return;
-
             apples.Remove(apple);
-
             CreateRandomApple();
         }
 
@@ -192,11 +184,14 @@ namespace GameSnake
 
         public void CreateApple(Point point)
         {
+            var creature = game.GameState.GetCreatureOrNull(point);
+            if (creature != null)
+            {
+                return;
+            }
             var newApple = new Apple(this);
             apples.Add(newApple);
-            var creature = game.GameState.GetCreatureOrNull(point);
-            if(creature == null)
-                game.GameState.SetCreature(point, newApple);
+            game.GameState.SetCreature(point, newApple);
         }
     }
 
@@ -216,7 +211,6 @@ namespace GameSnake
 
         public bool DeadInConflict(ICreature conflictedObject) 
         {
-            ApplesManager.ApplesDead(this);
             return true;
         }
 

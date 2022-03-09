@@ -25,6 +25,7 @@ namespace WinFormsGameView
         public GameWindow()
         {
             CreatureAnimation.SpriteSize = 32;
+            CreatureAnimation.AnimationTickLength = 16;
             InitLocalGame();
             InitForm(MapWidth, MapHeight);
             StartGame(LocalGameTimerTick);
@@ -47,8 +48,8 @@ namespace WinFormsGameView
             MapHeight = gameService.GameState.MapHeight; 
 
             var bot = ListBotPlayer.DownLeft;
-            var randomBot = new RandomBotPlayer();
-            gameService.AddPlayer(userPlayer);
+            var randomBot = new RandomBotPlayer(2);
+            gameService.AddPlayer(randomBot);
         }
 
         void StartGame(Action<object, EventArgs> action)
