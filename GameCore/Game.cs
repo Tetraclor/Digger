@@ -17,6 +17,17 @@ namespace GameCore
             GameState = gameState;
         }
 
+        public void CreateCreature(ICreature creature, Point point)
+        {
+            Animations.Add(new CreatureTransformation()
+            {
+                Command = new CreatureCommand(),
+                Creature = creature,
+                Location = point,
+                TargetLogicalLocation = point,
+            });
+        }
+
         public void BeginAct()
         {
             var players = GameState.Players;

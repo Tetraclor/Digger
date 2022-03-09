@@ -25,11 +25,19 @@ namespace Common
                      y + command.DeltaY >= game.MapHeight);
         }
 
+        public static bool IsInBound(this Point point, GameState game)
+        {
+            return !(point.X < 0 ||
+                     point.X >= game.MapWidth ||
+                     point.Y < 0 ||
+                     point.Y >= game.MapHeight);
+        }
+
         public static CreatureCommand TorSpace(this CreatureCommand command, GameState game, int x, int y)
         {
             if (command.IsInBound(game, x, y) == false)
             {
-                var movePoint = command.Move(x, y);
+                var movePoint = command.MoveFrom(x, y);
                 var cc = command.Clone();
                 movePoint.X = (movePoint.X + game.MapWidth) % game.MapWidth;
                 movePoint.Y = (movePoint.Y + game.MapHeight) % game.MapHeight;
@@ -39,6 +47,35 @@ namespace Common
                 return cc;
             }
             return command;
+        }
+
+        public static Point ToDir(this Point point, FourDirMove move)
+        {
+            switch (move)
+            {
+                case FourDirMove.None: return point;
+                case FourDirMove.Left: return new Point(point.X - 1, point.Y);
+                case FourDirMove.Right:
+                    return new Point(point.X + 1, point.Y);
+                case FourDirMove.Up:
+                    return new Point(point.X, point.Y - 1);
+                case FourDirMove.Down:
+                    return new Point(point.X, point.Y + 1);
+                default:
+                    break;
+            }
+            return point;
+        }
+
+        public static Point TorSpace(this Point point, GameState game)
+        {
+            if (point.IsInBound(game) == false)
+            {
+                point.X = (point.X + game.MapWidth) % game.MapWidth;
+                point.Y = (point.Y + game.MapHeight) % game.MapHeight;
+                return point;
+            }
+            return point;
         }
 
         public static CreatureCommand ToCreatureCommand(this Point point, Point target)

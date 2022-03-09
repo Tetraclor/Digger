@@ -10,5 +10,13 @@
             X = x;
             Y = y;
         }
+
+        public static bool operator ==(Point a, Point b) => a.X == b.X && a.Y == b.Y;
+        public static bool operator !=(Point a, Point b) => a.X != b.X || a.Y != b.Y;
+
+        public override string ToString()
+        {
+            return $"{X} {Y}";
+        }
     }
 }

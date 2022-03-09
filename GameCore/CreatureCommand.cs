@@ -8,7 +8,8 @@ namespace GameCore
         public int DeltaY { get; set; }
         public ICreature TransformTo { get; set; }
 
-        public Point Move(int x, int y) => new Point(x + DeltaX, y + DeltaY);
+        public Point MoveFrom(int x, int y) => new Point(x + DeltaX, y + DeltaY);
+        public Point MoveFrom(Point point) => new Point(point.X + DeltaX, point.Y + DeltaY);
         public CreatureCommand Clone() => (CreatureCommand)MemberwiseClone();
 
         public override bool Equals(object obj)

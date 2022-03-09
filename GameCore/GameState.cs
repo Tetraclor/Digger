@@ -29,6 +29,11 @@ namespace GameCore
             MapHeight = Map.GetLength(1);
         }
 
+        public void SetCreature(Point point, ICreature creature)
+        {
+            Map[point.X, point.Y] = creature;
+        }
+
         public ICreature GetCreatureOrNull(Point point)
         {
             if (point.X < 0 || point.Y < 0 || point.X >= MapWidth || point.Y >= MapHeight)

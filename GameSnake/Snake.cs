@@ -10,83 +10,121 @@ namespace GameSnake
 {
     public class Snake
     {
-        public HeadSnake Head { get; private set; }
-        public List<BodySnake> Body { get; private set; }
+        public HeadSnake Head;
+        public List<BodySnake> Tail = new List<BodySnake>();
+        public Game Game;
 
-        public Snake(HeadSnake head, params BodySnake[] body)
+        public Snake(Point head, params Point[] tail)
         {
-            Head = head;
-            Head.Snake = this;
-            Body = body.ToList();
+            Head = new HeadSnake(this, head);
+            foreach (var point in tail)
+            {
+                Tail.Add(new BodySnake(this, point));
+            }
+        }
+
+        public void AddToGame(Game game)
+        {
+            this.Game = game;
+            game.GameState.SetCreature(Head.Point, Head);
+            foreach (var item in Tail)
+            {
+                game.GameState.SetCreature(item.Point, item);
+            }
+        }
+
+        FourDirMove prevDir = FourDirMove.Right;
+
+        public void Move(FourDirMove dir, GameState gameState)
+        {
+            var target = Head.Point.ToDir(dir).TorSpace(gameState);
+
+            if (target == Head.Point || target == Head.PrevPoint)
+                dir = prevDir;
+            
+            prevDir = dir;
+            Move(Head.Point.ToDir(dir).TorSpace(gameState));
+        }
+
+        public void AddTailItem()
+        {
+            var last = Tail.Last();
+            var newTailItem = new BodySnake(this, last.PrevPoint);
+            Tail.Add(newTailItem);
+            Game.GameState.SetCreature(newTailItem.Point, newTailItem);
+        }
+
+        private void Move(Point target)
+        {
+            Head.PrevPoint = Head.Point;
+            Head.Point = target;
+
+            var temp = Head.PrevPoint;
+
+            foreach (var item in Tail)
+            {
+                item.PrevPoint = item.Point;
+                item.Point = temp;
+                temp = item.PrevPoint;
+            }
         }
 
         public void Tick(GameState game)
         {
-            var creatureCommand = Head.PrevCreatureCommand;
+        }
 
-            foreach (var item in Body)
+        public bool HeadConflict(ICreature creature)
+        {
+            if(creature is Apple)
             {
-                var temp = item.CreatureCommand;
-                item.CreatureCommand = creatureCommand;
-                creatureCommand = temp;
+                AddTailItem();
             }
-        }
-    }
-
-    public class HeadSnake : ICreature
-    {
-        public CreatureCommand PrevCreatureCommand;
-        public Snake Snake;
-
-        public CreatureCommand Act(GameState game, int x, int y)
-        {
-            var creatureCommand = CreatureCommandHelper.FromPlayerCommandNoCheckBound(game, this);
-
-            if (creatureCommand == CreatureCommandHelper.NoneCommand)
-                creatureCommand = PrevCreatureCommand;
-
-            var movePoint = creatureCommand.Move(x, y);
-            var moveToCreature = game.GetCreatureOrNull(movePoint);
-
-            var isMoveBack = Snake.Body.Contains(moveToCreature);
-
-            if (isMoveBack)
-                creatureCommand = PrevCreatureCommand;
-
-            PrevCreatureCommand = creatureCommand.Clone();
-
-            return creatureCommand.TorSpace(game, x, y);
-        }
-
-        public bool DeadInConflict(ICreature conflictedObject)
-        {
             return false;
         }
 
-        public int TransformPriority()
+        public bool BodyConflict(ICreature creature)
         {
-            return 1;
+            return false;
         }
+    }
+
+
+    public class HeadSnake : ICreature
+    {
+        public Point PrevPoint;
+        public Point Point;
+        public Snake Snake;
+
+        public HeadSnake(Snake snake, Point point)
+        {
+            Snake = snake;
+            Point = point;
+        }
+
+        public CreatureCommand Act(GameState game, int x, int y) => PrevPoint.ToCreatureCommand(Point);
+
+        public bool DeadInConflict(ICreature conflictedObject) => Snake.HeadConflict(conflictedObject);
+
+        public int TransformPriority() => 1;
     }
 
     public class BodySnake : ICreature
     {
-        public CreatureCommand CreatureCommand;
+        public Point PrevPoint;
+        public Point Point;
+        public Snake Snake;
 
-        public CreatureCommand Act(GameState game, int x, int y)
+        public BodySnake(Snake snake, Point point)
         {
-            return CreatureCommand.TorSpace(game, x, y);
+            Snake = snake;
+            Point = point;
         }
 
-        public bool DeadInConflict(ICreature conflictedObject)
-        {
-            return false;
-        }
+        public CreatureCommand Act(GameState game, int x, int y) => PrevPoint.ToCreatureCommand(Point);
 
-        public int TransformPriority()
-        {
-            return 1;
-        }
+        public bool DeadInConflict(ICreature conflictedObject) => Snake.BodyConflict(conflictedObject);
+
+        public int TransformPriority() => 1;
     }
 
     public class Apple : ICreature
