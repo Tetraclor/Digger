@@ -40,7 +40,7 @@ namespace WebApi
         public void StartGame()
         {
             remotePlayer = new RemotePlayer();
-            gameService.AddPlayer(randomBotPlayer);
+            gameService.AddPlayer(remotePlayer);
 
             timer.Stop();
             timer = new System.Timers.Timer();

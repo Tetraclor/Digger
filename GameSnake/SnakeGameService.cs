@@ -36,10 +36,13 @@ namespace GameSnake
 
         public override void MakeGameTick()
         {
-            var playerCommand = (PlayerCommand) player.GetCommand(GameState);
+            var playerCommand = player.GetCommand(GameState);
 
-            snake.Move(playerCommand.Move, GameState);
-            
+            var playerMove = FourDirMove.None;
+            if (playerCommand != null)
+                playerMove = (playerCommand as PlayerCommand).Move;           
+
+            snake.Move(playerMove, GameState);
 
             snake.Tick(GameState);
 

@@ -54,6 +54,18 @@ namespace GameSnake
             Game.GameState.SetCreature(newTailItem.Point, newTailItem);
         }
 
+        public void CutTail(BodySnake fromThis)
+        {
+            var index = Tail.IndexOf(fromThis);
+            if (index == -1) return;
+
+            for (int i = index; i < Tail.Count; i++)
+            {
+                Tail[i].IsDead = true;
+            }
+            Tail.RemoveRange(index, Tail.Count - index);
+        }
+
         private void Move(Point target)
         {
             Head.PrevPoint = Head.Point;
@@ -73,7 +85,7 @@ namespace GameSnake
         {
         }
 
-        public bool HeadConflict(ICreature creature)
+        public bool HeadConflict(HeadSnake ownHead, ICreature creature)
         {
             if(creature is Apple)
             {
@@ -82,9 +94,13 @@ namespace GameSnake
             return false;
         }
 
-        public bool BodyConflict(ICreature creature)
+        public bool BodyConflict(BodySnake ownBody, ICreature creature)
         {
-            return false;
+            if(creature == Head)
+            {
+                CutTail(ownBody);
+            }
+            return ownBody.IsDead;
         }
     }
 
@@ -103,13 +119,14 @@ namespace GameSnake
 
         public CreatureCommand Act(GameState game, int x, int y) => PrevPoint.ToCreatureCommand(Point);
 
-        public bool DeadInConflict(ICreature conflictedObject) => Snake.HeadConflict(conflictedObject);
+        public bool DeadInConflict(ICreature conflictedObject) => Snake.HeadConflict(this, conflictedObject);
 
         public int TransformPriority() => 1;
     }
 
     public class BodySnake : ICreature
     {
+        public bool IsDead;
         public Point PrevPoint;
         public Point Point;
         public Snake Snake;
@@ -122,7 +139,7 @@ namespace GameSnake
 
         public CreatureCommand Act(GameState game, int x, int y) => PrevPoint.ToCreatureCommand(Point);
 
-        public bool DeadInConflict(ICreature conflictedObject) => Snake.BodyConflict(conflictedObject);
+        public bool DeadInConflict(ICreature conflictedObject) => Snake.BodyConflict(this, conflictedObject);
 
         public int TransformPriority() => 1;
     }
