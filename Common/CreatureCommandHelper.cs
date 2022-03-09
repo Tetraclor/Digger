@@ -53,8 +53,10 @@ namespace Common
         {
             switch (move)
             {
-                case FourDirMove.None: return point;
-                case FourDirMove.Left: return new Point(point.X - 1, point.Y);
+                case FourDirMove.None: 
+                    return point;
+                case FourDirMove.Left: 
+                    return new Point(point.X - 1, point.Y);
                 case FourDirMove.Right:
                     return new Point(point.X + 1, point.Y);
                 case FourDirMove.Up:

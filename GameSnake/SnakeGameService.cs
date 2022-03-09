@@ -11,9 +11,7 @@ namespace GameSnake
 
         public SnakeGameService(int width, int height) : base(width, height, typeof(HeadSnake))
         {
-            GameState.SetCreature(new Point(6, 6), new Apple());
-            GameState.SetCreature(new Point(7, 7), new Apple());
-            GameState.SetCreature(new Point(8, 8), new Apple());
+            var appleManager = new ApplesManager(Game, 10);
         }
 
         public override bool AddPlayer(IPlayer player)

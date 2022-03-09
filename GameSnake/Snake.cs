@@ -126,7 +126,7 @@ namespace GameSnake
 
     public class BodySnake : ICreature
     {
-        public bool IsDead;
+        public bool IsDead = false;
         public Point PrevPoint;
         public Point Point;
         public Snake Snake;
@@ -144,21 +144,84 @@ namespace GameSnake
         public int TransformPriority() => 1;
     }
 
+    public class ApplesManager
+    {
+        private Random Random = new Random();
+        private Game game;
+        public HashSet<Apple> apples = new HashSet<Apple>();
+
+        public ApplesManager(Game game, int applesCount)
+        {
+            this.game = game;
+
+            for (int i = 0; i < applesCount; i++)
+            {
+                CreateRandomApple();
+            }
+        }
+
+        public ApplesManager(Game game, params Point[] apples)
+        {
+            this.game = game;
+
+            foreach(var p in apples)
+            {
+                CreateApple(p);
+            }
+        }
+
+        public void ApplesDead(Apple apple)
+        {
+            if (apples.Contains(apple) == false) return;
+
+            apples.Remove(apple);
+
+            CreateRandomApple();
+        }
+
+        public void CreateRandomApple()
+        {
+            var x = Random.Next(game.GameState.MapWidth);
+            var y = Random.Next(game.GameState.MapWidth);
+
+            var p = new Point(x, y);
+
+            CreateApple(p);
+        }
+
+        public void CreateApple(Point point)
+        {
+            var newApple = new Apple(this);
+            apples.Add(newApple);
+            var creature = game.GameState.GetCreatureOrNull(point);
+            if(creature == null)
+                game.GameState.SetCreature(point, newApple);
+        }
+    }
+
     public class Apple : ICreature
     {
+        public ApplesManager ApplesManager;
+
+        public Apple(ApplesManager manager)
+        {
+            this.ApplesManager = manager;
+        }
+
         public CreatureCommand Act(GameState game, int x, int y)
         {
             return new CreatureCommand();
         }
 
-        public bool DeadInConflict(ICreature conflictedObject)
+        public bool DeadInConflict(ICreature conflictedObject) 
         {
-            return conflictedObject is HeadSnake;
+            ApplesManager.ApplesDead(this);
+            return true;
         }
 
         public int TransformPriority()
         {
-            return 0;
+            return 2;
         }
     }
 }
