@@ -54,7 +54,7 @@ namespace WinFormsGameView
             MapHeight = gameService.GameState.MapHeight; 
 
             var bot = ListBotPlayer.DownLeft;
-            gameService.AddPlayer(bot);
+            gameService.AddPlayer(userPlayer);
         }
 
         void StartGame(Action<object, EventArgs> action)
@@ -102,12 +102,14 @@ namespace WinFormsGameView
 
             e.Graphics.ResetTransform();
            // e.Graphics.DrawString(GameState.Scores.ToString(), new Font("Arial", 16), Brushes.Green, 0, 0);
-        }    
+        }
+
+        int animationTickLength = 32;
 
         private void MapToAnimation()
         {
             var size = ElementSize;
-            var d = 4 * (animationTickCount + 1);
+            var d = (size / animationTickLength) * (animationTickCount + 1);
             drawPoints.Clear();
 
             foreach (var a in Transformations)
@@ -126,7 +128,7 @@ namespace WinFormsGameView
             MapToAnimation();
 
             animationTickCount++;
-            if (animationTickCount == 8) animationTickCount = 0;
+            if (animationTickCount == animationTickLength) animationTickCount = 0;
 
             Invalidate();
         }

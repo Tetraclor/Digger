@@ -19,7 +19,7 @@ namespace WebApi
         static RemotePlayer remotePlayer = new RemotePlayer();
         static IPlayer randomBotPlayer = new ListBotPlayer(FourDirMove.Down, FourDirMove.Left);
         static GameService gameService = new SnakeGameService(10, 10);
-       // static GameService gameService = new DiggerGameService(DiggerGameService.mapWithPlayerTerrain);
+        //static GameService gameService = new DiggerGameService(DiggerGameService.mapWithPlayerTerrain);
 
         IHubContext<GameHub> hubContext { get; }
 
