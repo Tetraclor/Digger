@@ -8,29 +8,42 @@ using System.Threading.Tasks;
 
 namespace GameSnake
 {
+    public class Spawn : ICreature
+    {
+        public CreatureCommand Act(GameState game, int x, int y)
+        {
+            return new CreatureCommand();
+        }
+
+        public bool DeadInConflict(ICreature conflictedObject)
+        {
+            return false;
+        }
+
+        public int TransformPriority()
+        {
+            return 1;
+        }
+    }
+
     public class Snake
     {
+        public bool IsDead;
         public HeadSnake Head;
         public List<BodySnake> Tail = new List<BodySnake>();
         public Game Game;
 
-        public Snake(Point head, params Point[] tail)
+        public Snake(Game game, Point head, params Point[] tail)
         {
+            Game = game;
             Head = new HeadSnake(this, head);
             Head.PrevPoint = tail.FirstOrDefault();
+            game.GameState.SetCreature(Head.Point, Head);
             foreach (var point in tail)
             {
-                Tail.Add(new BodySnake(this, point));
-            }
-        }
-
-        public void AddToGame(Game game)
-        {
-            this.Game = game;
-            game.GameState.SetCreature(Head.Point, Head);
-            foreach (var item in Tail)
-            {
-                game.GameState.SetCreature(item.Point, item);
+                var body = new BodySnake(this, point);
+                Tail.Add(body);
+                game.GameState.SetCreature(point, body);
             }
         }
 
@@ -45,6 +58,13 @@ namespace GameSnake
             
             prevDir = dir;
             Move(Head.Point.ToDir(dir).TorSpace(gameState));
+        }
+
+        public void Dead()
+        {
+            IsDead = true;
+            Game.DeleteCreature(Head.Point);
+            Tail.ForEach(v => Game.DeleteCreature(v.Point));
         }
 
         public void AddTailItem()
@@ -71,16 +91,7 @@ namespace GameSnake
         private void Move(Point target)
         {
             var creature = this.Game.GameState.GetCreatureOrNull(target);
-
-            if (creature is Apple apple)
-            {
-                AddTailItem();
-                apple.ApplesManager.AppleDead(apple);
-            }
-            else if (Tail.Contains(creature))
-            {
-                CutTail((BodySnake)creature);
-            }
+            SolveConflicted(creature);
 
             Head.PrevPoint = Head.Point;
             Head.Point = target;
@@ -92,6 +103,23 @@ namespace GameSnake
                 item.PrevPoint = item.Point;
                 item.Point = temp;
                 temp = item.PrevPoint;
+            }
+        }
+
+        private void SolveConflicted(ICreature creature)
+        {
+            if (creature is Apple apple)
+            {
+                AddTailItem();
+                apple.ApplesManager.AppleDead(apple);
+            }
+            else if(creature is Wall wall)
+            {
+                Dead();
+            }
+            else if (Tail.Contains(creature))
+            {
+                CutTail((BodySnake)creature);
             }
         }
     }
@@ -137,86 +165,5 @@ namespace GameSnake
         public bool DeadInConflict(ICreature conflictedObject) => IsDead;
 
         public int TransformPriority() => 1;
-    }
-
-    public class ApplesManager
-    {
-        private Random Random = new Random();
-        private Game game;
-        public HashSet<Apple> apples = new HashSet<Apple>();
-
-        public ApplesManager(Game game, int applesCount)
-        {
-            this.game = game;
-
-            for (int i = 0; i < applesCount; i++)
-            {
-                CreateRandomApple();
-            }
-        }
-
-        public ApplesManager(Game game, params Point[] apples)
-        {
-            this.game = game;
-
-            foreach(var p in apples)
-            {
-                CreateApple(p);
-            }
-        }
-
-        public void AppleDead(Apple apple)
-        {
-            if (apples.Contains(apple) == false) return;
-            apples.Remove(apple);
-            CreateRandomApple();
-        }
-
-        public void CreateRandomApple()
-        {
-            var x = Random.Next(game.GameState.MapWidth);
-            var y = Random.Next(game.GameState.MapWidth);
-
-            var p = new Point(x, y);
-
-            CreateApple(p);
-        }
-
-        public void CreateApple(Point point)
-        {
-            var creature = game.GameState.GetCreatureOrNull(point);
-            if (creature != null)
-            {
-                return;
-            }
-            var newApple = new Apple(this);
-            apples.Add(newApple);
-            game.GameState.SetCreature(point, newApple);
-        }
-    }
-
-    public class Apple : ICreature
-    {
-        public ApplesManager ApplesManager;
-
-        public Apple(ApplesManager manager)
-        {
-            this.ApplesManager = manager;
-        }
-
-        public CreatureCommand Act(GameState game, int x, int y)
-        {
-            return new CreatureCommand();
-        }
-
-        public bool DeadInConflict(ICreature conflictedObject) 
-        {
-            return true;
-        }
-
-        public int TransformPriority()
-        {
-            return 2;
-        }
     }
 }

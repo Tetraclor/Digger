@@ -9,6 +9,7 @@
     <Content Remove="wwwroot\Images\Gold.png" />
     <Content Remove="wwwroot\Images\Monster.png" />
     <Content Remove="wwwroot\Images\Sack.png" />
+    <Content Remove="wwwroot\Images\Spawn.png" />
     <Content Remove="wwwroot\Images\Terrain.png" />
   </ItemGroup>
 
@@ -30,6 +31,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="wwwroot\Images\Sack.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="wwwroot\Images\Spawn.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="wwwroot\Images\Terrain.png">

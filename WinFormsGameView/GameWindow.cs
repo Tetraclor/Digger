@@ -14,7 +14,7 @@ namespace WinFormsGameView
     public class GameWindow : Form
     {
        // private GameService gameService = new DiggerGameService(DiggerGameService.mapWithPlayerTerrain);
-        private GameService gameService = new SnakeGameService(10, 10);
+        private GameService gameService = new SnakeGameService(SnakeGameService.TestMap);
 
         private readonly HashSet<Keys> pressedKeys = new HashSet<Keys>();
         private UserPlayer userPlayer = new UserPlayer();
@@ -25,7 +25,7 @@ namespace WinFormsGameView
         public GameWindow()
         {
             CreatureAnimation.SpriteSize = 32;
-            CreatureAnimation.AnimationTickLength = 16;
+            CreatureAnimation.AnimationTickLength = 32;
             InitLocalGame();
             InitForm(MapWidth, MapHeight);
             StartGame(LocalGameTimerTick);
@@ -49,7 +49,7 @@ namespace WinFormsGameView
 
             var bot = ListBotPlayer.DownLeft;
             var randomBot = new RandomBotPlayer(2);
-            gameService.AddPlayer(randomBot);
+            gameService.AddPlayer(userPlayer);
         }
 
         void StartGame(Action<object, EventArgs> action)
@@ -122,6 +122,8 @@ namespace WinFormsGameView
         public static string Get(HeadSnake _) => "HeadSnake.png";
         public static string Get(BodySnake _) => "BodySnake.png";
         public static string Get(Apple _) => "Apple.png";
+        public static string Get(Wall _) => "Terrain.png";
+        public static string Get(Spawn _) => "Spawn.png";
     }
 
     public class UserPlayer : IPlayer

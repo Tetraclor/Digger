@@ -57,6 +57,9 @@
     <None Update="Images\Sack.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Images\Spawn.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Images\Terrain.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
