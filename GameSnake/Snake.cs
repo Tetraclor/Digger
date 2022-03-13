@@ -8,24 +8,6 @@ using System.Threading.Tasks;
 
 namespace GameSnake
 {
-    public class Spawn : ICreature
-    {
-        public CreatureCommand Act(GameState game, int x, int y)
-        {
-            return new CreatureCommand();
-        }
-
-        public bool DeadInConflict(ICreature conflictedObject)
-        {
-            return false;
-        }
-
-        public int TransformPriority()
-        {
-            return 1;
-        }
-    }
-
     public class Snake
     {
         public bool IsDead;
@@ -69,8 +51,9 @@ namespace GameSnake
 
         public void AddTailItem()
         {
-            var last = Tail.Last();
-            var newTailItem = new BodySnake(this, last.PrevPoint);
+            var prevPoint = Tail.Count == 0 ? Head.PrevPoint : Tail.Last().PrevPoint;
+
+            var newTailItem = new BodySnake(this, prevPoint);
             Tail.Add(newTailItem);
             Game.CreateCreature(newTailItem.Point, newTailItem);
         }
@@ -113,7 +96,7 @@ namespace GameSnake
                 AddTailItem();
                 apple.ApplesManager.AppleDead(apple);
             }
-            else if(creature is Wall wall)
+            else if(creature is Wall _ || creature is Spawn _)
             {
                 Dead();
             }

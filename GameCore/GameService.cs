@@ -18,6 +18,15 @@ namespace GameCore
 
         public GameService(string stringmap, Type gameType)
         {
+            Init(stringmap, gameType);
+        }
+
+        public GameService()
+        {
+        }
+
+        protected void Init(string stringmap, Type gameType)
+        {
             var map = CreatureMapCreator.CreateMap(stringmap, Assembly.GetAssembly(gameType));
             GameState = new GameState(map);
             Game = new Game(GameState);

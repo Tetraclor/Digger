@@ -69,6 +69,14 @@ namespace Common
             return point;
         }
 
+        public static IEnumerable<Point> GetNear(this Point point)
+        {
+            yield return point.ToDir(FourDirMove.Left);
+            yield return point.ToDir(FourDirMove.Right);
+            yield return point.ToDir(FourDirMove.Up);
+            yield return point.ToDir(FourDirMove.Down);
+        }
+
         public static Point TorSpace(this Point point, GameState game)
         {
             if (point.IsInBound(game) == false)

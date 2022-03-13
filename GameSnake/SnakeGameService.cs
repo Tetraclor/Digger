@@ -1,36 +1,91 @@
 ﻿using Common;
 using GameCore;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace GameSnake
 {
     public class SnakeGameService : GameService
     {
-        Snake snake;
-        IPlayer player;
+        class PlayerInfo
+        {
+            public bool IsActive => player != null;
+            public Snake snake;
+            public Spawn spawn;
+            public IPlayer player;
+
+            public bool IsSpawnInProgress = false;
+            public int SpawnTailElement = 2;
+            private int CurrentSpawnTailElement = 0;
+
+            public void ProgressSpawn()
+            {
+                CurrentSpawnTailElement++;
+                snake.AddTailItem();
+                if(CurrentSpawnTailElement == SpawnTailElement)
+                {
+                    IsSpawnInProgress = false;
+                    CurrentSpawnTailElement = 0;
+                }   
+            }
+
+            public bool SpawnSnake(Game game)
+            {
+                IsSpawnInProgress = true;
+
+                if (spawn.HasFreePointNear == false)
+                    return false;
+
+                var headPoint = spawn.NearFreePoint;
+
+                snake = new Snake(game, headPoint);
+                return true;
+            }
+
+            public FourDirMove GetPlayerMove(GameState gameState)
+            {
+                var playerCommand = player.GetCommand(gameState);
+                var playerMove = FourDirMove.None;
+
+                if (playerCommand != null)
+                    playerMove = (playerCommand as PlayerCommand).Move;
+
+                return playerMove;
+            }
+        }
+
+        List<PlayerInfo> playerInfos = new();
 
         public SnakeGameService(int width, int height) : base(width, height, typeof(HeadSnake))
         {
             var appleManager = new ApplesManager(Game, 10);
+
+            base.MakeGameTick();
         }
 
-        public SnakeGameService(string mapString) : base(mapString, typeof(HeadSnake))
+        public SnakeGameService(string mapString) 
         {
+            Init(mapString, typeof(HeadSnake));
+
             var appleManager = new ApplesManager(Game, 10);
+            playerInfos = GameState.GetCreatures<Spawn>()
+                .Select(v => new PlayerInfo() { spawn = v })
+                .ToList();
+
+            base.MakeGameTick();
         }
 
         public override bool AddPlayer(IPlayer player)
         {
-            SpawnSnake();
+            var newPlayerInfo = playerInfos.FirstOrDefault(v => v.IsActive == false);
 
-            this.player = player;
+            if (newPlayerInfo == null) return false;
+
+            newPlayerInfo.SpawnSnake(Game); 
+            newPlayerInfo.player = player;
 
             return true;
-        }
-
-        private void SpawnSnake()
-        {
-            snake = new Snake(Game, new Point(2, 2), new Point(2, 1));
         }
 
         public override IPlayerCommand ParsePlayerCommand(string command)
@@ -41,24 +96,28 @@ namespace GameSnake
             return playerCommand;
         }
 
-
-
         public override void MakeGameTick()
         {
-            var playerCommand = player.GetCommand(GameState);
-            var playerMove = FourDirMove.None;
-
-            if (playerCommand != null)
-                playerMove = (playerCommand as PlayerCommand).Move;
-
-            if (snake.IsDead)
+            foreach (var pi in playerInfos.Where(v => v.IsActive))
             {
-                SpawnSnake();
+                var snake = pi.snake;
+                var playerMove = pi.GetPlayerMove(GameState);
+                snake.Move(playerMove, GameState);
             }
 
-            snake.Move(playerMove, GameState);
-
             base.MakeGameTick();
+
+            foreach(var pi in playerInfos.Where(v => v.IsActive))
+            {
+                if (pi.IsSpawnInProgress)
+                {
+                    pi.ProgressSpawn();
+                }
+                if (pi.snake.IsDead)
+                {
+                    pi.SpawnSnake(Game);
+                }
+            }
         }
 
         public const string TestMap = @"

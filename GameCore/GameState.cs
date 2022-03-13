@@ -44,6 +44,18 @@ namespace GameCore
             return Map[point.X, point.Y];
         }
 
+        public IEnumerable<T> GetCreatures<T>() where T : ICreature
+        {
+            for (int  i = 0;  i < MapHeight;  i++)
+            {
+                for (int j = 0; j < MapWidth; j++)
+                {
+                    if (Map[j, i] is T t)
+                        yield return t;
+                }
+            }
+        }
+
         public void AddPlayer(IPlayer player, params ICreature[] bindCreatures)
         {
             foreach (var creature in bindCreatures)

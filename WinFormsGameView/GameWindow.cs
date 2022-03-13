@@ -50,6 +50,7 @@ namespace WinFormsGameView
             var bot = ListBotPlayer.DownLeft;
             var randomBot = new RandomBotPlayer(2);
             gameService.AddPlayer(userPlayer);
+            gameService.AddPlayer(randomBot);
         }
 
         void StartGame(Action<object, EventArgs> action)
