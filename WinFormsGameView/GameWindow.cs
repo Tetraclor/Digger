@@ -49,8 +49,10 @@ namespace WinFormsGameView
 
             var bot = ListBotPlayer.DownLeft;
             var randomBot = new RandomBotPlayer(2);
+            var primitiveBot = new SnakeBot();
             gameService.AddPlayer(userPlayer);
             gameService.AddPlayer(randomBot);
+            gameService.AddPlayer(primitiveBot);
         }
 
         void StartGame(Action<object, EventArgs> action)

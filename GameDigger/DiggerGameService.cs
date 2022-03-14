@@ -13,7 +13,7 @@ namespace GameDigger
         public override bool AddPlayer(IPlayer player)
         {
             var creature = GameState.Map[2, 1];
-            GameState.AddPlayer(player, creature);
+            //GameState.AddPlayer(player, creature);
 
             return true;
         }

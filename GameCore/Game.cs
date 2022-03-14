@@ -38,14 +38,6 @@ namespace GameCore
 
         public void BeginAct()
         {
-            var players = GameState.Players;
-            GameState.PlayersCommands = new Dictionary<IPlayer, IPlayerCommand>();
-
-            foreach(var player in players)
-            {
-                GameState.PlayersCommands[player] = player.GetCommand(GameState);
-            }
-
             GameState.CreaturesLocations.Clear();
             Animations.Clear();
 

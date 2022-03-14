@@ -21,6 +21,7 @@ namespace GameSnake
             Head = new HeadSnake(this, head);
             Head.PrevPoint = tail.FirstOrDefault();
             game.GameState.SetCreature(Head.Point, Head);
+
             foreach (var point in tail)
             {
                 var body = new BodySnake(this, point);
@@ -33,13 +34,13 @@ namespace GameSnake
 
         public void Move(FourDirMove dir, GameState gameState)
         {
-            var target = Head.Point.ToDir(dir).TorSpace(gameState);
+            var target = Head.Point.PointWithDir(dir).TorSpace(gameState);
 
             if (target == Head.Point || target == Head.PrevPoint)
                 dir = prevDir;
             
             prevDir = dir;
-            Move(Head.Point.ToDir(dir).TorSpace(gameState));
+            Move(Head.Point.PointWithDir(dir).TorSpace(gameState));
         }
 
         public void Dead()

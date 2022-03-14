@@ -8,9 +8,7 @@ namespace GameCore
 {
     public class GameState : IReadOnlyGameState
     {
-        public List<IPlayer> Players = new List<IPlayer>();
-        public Dictionary<IPlayer, IPlayerCommand> PlayersCommands = new Dictionary<IPlayer, IPlayerCommand>();
-        public Dictionary<ICreature, IPlayer> PlayersCreatures = new Dictionary<ICreature, IPlayer>();
+
         public Dictionary<ICreature, Point> CreaturesLocations = new Dictionary<ICreature, Point>();
         public readonly ICreature[,] Map;
         public int Scores { get; set; }
@@ -55,37 +53,5 @@ namespace GameCore
                 }
             }
         }
-
-        public void AddPlayer(IPlayer player, params ICreature[] bindCreatures)
-        {
-            foreach (var creature in bindCreatures)
-            {
-                PlayersCreatures[creature] = player;
-            }
-            Players.Add(player);
-        }
-
-        public IPlayerCommand GetPlayerCommandOrNull(ICreature creature)
-        {
-            if (PlayersCreatures.TryGetValue(creature, out IPlayer player) == false)
-                return null;
-            if (PlayersCommands.TryGetValue(player, out IPlayerCommand command) == false)
-                return null;
-            return command;
-        }
-    }
-
-    public interface IPlayer
-    {
-        IPlayerCommand GetCommand(IReadOnlyGameState gameState);
-    }
-
-    public interface IPlayerCommand
-    {
-    }
-
-    public interface IReadOnlyGameState
-    {
-        ICreature GetCreatureOrNull(Point point);
     }
 }

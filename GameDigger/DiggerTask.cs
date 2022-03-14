@@ -28,7 +28,7 @@ namespace GameDigger
     {
         public CreatureCommand Act(GameState game, int x, int y)
         {
-            var playerCommand = (PlayerCommand)game.GetPlayerCommandOrNull(this);
+            var playerCommand = (PlayerCommand)null; // TODO
 
             if (playerCommand == null)
                 return CreatureCommandHelper.NoneCommand;

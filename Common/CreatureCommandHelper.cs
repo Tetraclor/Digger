@@ -33,6 +33,15 @@ namespace Common
                      point.Y >= game.MapHeight);
         }
 
+
+        public static bool IsInBound(this Point point, IReadOnlyGameState game)
+        {
+            return !(point.X < 0 ||
+                     point.X >= game.MapWidth ||
+                     point.Y < 0 ||
+                     point.Y >= game.MapHeight);
+        }
+
         public static CreatureCommand TorSpace(this CreatureCommand command, GameState game, int x, int y)
         {
             if (command.IsInBound(game, x, y) == false)
@@ -49,7 +58,20 @@ namespace Common
             return command;
         }
 
-        public static Point ToDir(this Point point, FourDirMove move)
+        public static FourDirMove ToDir(this Point a, Point b)
+        {
+            var dx = b.X - a.X;
+            var dy = b.Y - a.Y;
+
+            if (dx == 1) return FourDirMove.Right;
+            if (dx == -1) return FourDirMove.Left;
+            if (dy == 1) return FourDirMove.Down;
+            if (dy == -1) return FourDirMove.Up;
+
+            return FourDirMove.None;
+        }
+
+        public static Point PointWithDir(this Point point, FourDirMove move)
         {
             switch (move)
             {
@@ -71,10 +93,10 @@ namespace Common
 
         public static IEnumerable<Point> GetNear(this Point point)
         {
-            yield return point.ToDir(FourDirMove.Left);
-            yield return point.ToDir(FourDirMove.Right);
-            yield return point.ToDir(FourDirMove.Up);
-            yield return point.ToDir(FourDirMove.Down);
+            yield return point.PointWithDir(FourDirMove.Left);
+            yield return point.PointWithDir(FourDirMove.Right);
+            yield return point.PointWithDir(FourDirMove.Up);
+            yield return point.PointWithDir(FourDirMove.Down);
         }
 
         public static Point TorSpace(this Point point, GameState game)
@@ -101,27 +123,5 @@ namespace Common
             [FourDirMove.Down] = new CreatureCommand { DeltaY = 1 },
             [FourDirMove.None] = new CreatureCommand()
         };
-
-        public static CreatureCommand FromPlayerCommand(GameState game, ICreature creature, int x, int y)
-        {
-            var playerCommand = (PlayerCommand)game.GetPlayerCommandOrNull(creature);
-            if (playerCommand == null) 
-                return NoneCommand;
-
-            var creatureCommand = playerCommandToCreatureComand[playerCommand.Move];
-
-            return creatureCommand.IsInBound(game, x, y) ? creatureCommand : NoneCommand;
-        }
-
-        public static CreatureCommand FromPlayerCommandNoCheckBound(GameState game, ICreature creature)
-        {
-            var playerCommand = (PlayerCommand)game.GetPlayerCommandOrNull(creature);
-            if (playerCommand == null)
-                return NoneCommand;
-
-            var creatureCommand = playerCommandToCreatureComand[playerCommand.Move];
-
-            return creatureCommand;
-        }
     }
 }

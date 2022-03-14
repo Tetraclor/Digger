@@ -1,10 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 
 namespace GameCore
 {
     public abstract class GameService
     {
+        public List<IPlayer> Players = new List<IPlayer>();
+        public Dictionary<IPlayer, IPlayerCommand> PlayersCommands = new Dictionary<IPlayer, IPlayerCommand>();
+        public Dictionary<ICreature, IPlayer> PlayersCreatures = new Dictionary<ICreature, IPlayer>();
+
         public Game Game;
         public GameState GameState;
         public int CurrentTick { get; private set; }
@@ -32,6 +37,15 @@ namespace GameCore
             Game = new Game(GameState);
         }
 
+        public IPlayerCommand GetPlayerCommandOrNull(ICreature creature)
+        {
+            if (PlayersCreatures.TryGetValue(creature, out IPlayer player) == false)
+                return null;
+            if (PlayersCommands.TryGetValue(player, out IPlayerCommand command) == false)
+                return null;
+            return command;
+        }
+
         public virtual void MakeGameTick()
         {
             Game.BeginAct();
@@ -40,5 +54,21 @@ namespace GameCore
         }
         public abstract bool AddPlayer(IPlayer player);
         public abstract IPlayerCommand ParsePlayerCommand(string command);
+    }
+
+    public interface IPlayer
+    {
+        IPlayerCommand GetCommand(IReadOnlyGameState gameState);
+    }
+
+    public interface IPlayerCommand
+    {
+    }
+
+    public interface IReadOnlyGameState
+    {
+        int MapWidth { get; }
+        int MapHeight { get; }
+        ICreature GetCreatureOrNull(Point point);
     }
 }
