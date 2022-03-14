@@ -6,7 +6,7 @@ namespace Common
     {
         public IPlayerCommand PlayerCommand;
 
-        public IPlayerCommand GetCommand(IReadOnlyGameState gameState)
+        public IPlayerCommand GetCommand(IGameStateForPlayer gameState)
         {
             var temp = PlayerCommand;
             // Обнуляем комнаду чтобы если удаленный пользователь не успел отправить команду не исполнялась бесконечно предыдущая команда

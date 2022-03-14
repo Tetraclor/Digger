@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace GameCore
 {
-    public class GameState : IReadOnlyGameState
+    public class GameState : IGameStateForPlayer
     {
 
         public Dictionary<ICreature, Point> CreaturesLocations = new Dictionary<ICreature, Point>();

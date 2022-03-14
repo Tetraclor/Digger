@@ -133,7 +133,7 @@ namespace WinFormsGameView
     {
         public Keys PressedKey;
 
-        public IPlayerCommand GetCommand(IReadOnlyGameState gameState)
+        public IPlayerCommand GetCommand(IGameStateForPlayer gameState)
         {
             return new PlayerCommand() { Move = KeyToMoveCommand(PressedKey) };
         }

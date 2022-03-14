@@ -6,6 +6,68 @@ using System.Linq;
 
 namespace GameSnake
 {
+    public class SnakeBot : IPlayer
+    {
+        public IPlayerCommand GetCommand(IGameStateForPlayer gameState)
+        {
+            var state = (SnakeGameStateForPlayer)gameState;
+            var move = FourDirMove.None;
+
+            var headPoint = state.MySnakeHead;
+            var targetPoint = headPoint;
+
+            var nearApples = headPoint
+               .GetNear()
+               .Where(v => v.IsInBound(gameState))
+               .Where(v => gameState.GetCreatureOrNull(v) is Apple);
+
+            if(nearApples.Any())
+            {
+                targetPoint = nearApples.FirstOrDefault();
+                return ReturnCommand();
+            }
+
+            var nearFree = headPoint
+                .GetNear()
+                .Where(v => v.IsInBound(gameState))
+                .Where(v => gameState.GetCreatureOrNull(v) == null);
+
+            var random = new Random();
+
+            targetPoint = nearFree.PickRandom();
+
+            return ReturnCommand();
+
+
+            PlayerCommand ReturnCommand()
+            {
+                move = headPoint.ToDir(targetPoint);
+                return new PlayerCommand() { Move = move };
+            }
+        }
+    }
+
+    public class SnakeGameStateForPlayer : IGameStateForPlayer
+    {
+        private GameState gameState;
+        private Snake snakePlayer;
+
+        public SnakeGameStateForPlayer(GameState gameState, Snake snakePlayer)
+        {
+            this.gameState = gameState;
+            this.snakePlayer = snakePlayer;
+        }
+
+        public int MapWidth => gameState.MapWidth;
+
+        public int MapHeight => gameState.MapHeight;
+
+        public ICreature GetCreatureOrNull(Point point) => gameState.GetCreatureOrNull(point);
+
+        public Point MySnakeHead => snakePlayer.Head.Point;
+        public List<Point> MySnakeBody => snakePlayer.Tail.Select(v => v.Point).ToList();
+    }
+
     public class SnakeGameService : GameService
     {
         class PlayerInfo
@@ -45,7 +107,7 @@ namespace GameSnake
 
             public FourDirMove GetPlayerMove(GameState gameState)
             {
-                var playerCommand = player.GetCommand(gameState);
+                var playerCommand = player.GetCommand(new SnakeGameStateForPlayer(gameState, snake));
                 var playerMove = FourDirMove.None;
 
                 if (playerCommand != null)
@@ -119,6 +181,8 @@ namespace GameSnake
                 }
             }
         }
+
+
 
         public const string TestMap = @"
 WWWWW WWWWWWWWWW WWWWW

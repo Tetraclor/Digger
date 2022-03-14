@@ -58,14 +58,14 @@ namespace GameCore
 
     public interface IPlayer
     {
-        IPlayerCommand GetCommand(IReadOnlyGameState gameState);
+        IPlayerCommand GetCommand(IGameStateForPlayer gameState);
     }
 
     public interface IPlayerCommand
     {
     }
 
-    public interface IReadOnlyGameState
+    public interface IGameStateForPlayer
     {
         int MapWidth { get; }
         int MapHeight { get; }

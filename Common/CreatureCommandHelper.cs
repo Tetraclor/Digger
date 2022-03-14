@@ -34,7 +34,7 @@ namespace Common
         }
 
 
-        public static bool IsInBound(this Point point, IReadOnlyGameState game)
+        public static bool IsInBound(this Point point, IGameStateForPlayer game)
         {
             return !(point.X < 0 ||
                      point.X >= game.MapWidth ||
