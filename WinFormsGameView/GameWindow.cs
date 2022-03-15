@@ -25,7 +25,7 @@ namespace WinFormsGameView
         public GameWindow()
         {
             CreatureAnimation.SpriteSize = 32;
-            CreatureAnimation.AnimationTickLength = 32;
+            CreatureAnimation.AnimationTickLength = 16;
             InitLocalGame();
             InitForm(MapWidth, MapHeight);
             StartGame(LocalGameTimerTick);
@@ -51,7 +51,8 @@ namespace WinFormsGameView
             var randomBot = new RandomBotPlayer(2);
             var primitiveBot = new SnakeBot();
             gameService.AddPlayer(userPlayer);
-            gameService.AddPlayer(randomBot);
+            gameService.AddPlayer(primitiveBot);
+            gameService.AddPlayer(primitiveBot);
             gameService.AddPlayer(primitiveBot);
         }
 

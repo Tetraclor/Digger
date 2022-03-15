@@ -74,7 +74,11 @@ namespace GameSnake
 
         private void Move(Point target)
         {
-            var creature = this.Game.GameState.GetCreatureOrNull(target);
+            var creature = this.Game.GameState.GetCreatureOrNull(target); // Current
+
+            if (creature == null)                                          // Future
+                creature = Game.GetCandidates(target).FirstOrDefault();
+
             SolveConflicted(creature);
 
             Head.PrevPoint = Head.Point;
@@ -92,6 +96,8 @@ namespace GameSnake
 
         private void SolveConflicted(ICreature creature)
         {
+            if (IsDead) return;
+
             if (creature is Apple apple)
             {
                 AddTailItem();
@@ -104,6 +110,28 @@ namespace GameSnake
             else if (Tail.Contains(creature))
             {
                 CutTail((BodySnake)creature);
+            }
+            else if(creature is BodySnake otherSnakeBody)
+            {
+                Dead();
+            }
+            else if(creature is HeadSnake otherSnakeHead)
+            {
+                var otherSnake = otherSnakeHead.Snake;
+
+                if(Tail.Count < otherSnake.Tail.Count)
+                {
+                    Dead();
+                }
+                else if(Tail.Count > otherSnake.Tail.Count)
+                {
+                    otherSnake.Dead();
+                }
+                else
+                {
+                    Dead();
+                    otherSnake.Dead();
+                }
             }
         }
     }

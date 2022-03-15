@@ -32,9 +32,11 @@ namespace GameSnake
                 .Where(v => v.IsInBound(gameState))
                 .Where(v => gameState.GetCreatureOrNull(v) == null);
 
-            var random = new Random();
 
-            targetPoint = nearFree.PickRandom();
+            if (nearFree.Any())
+            {
+                targetPoint = nearFree.PickRandom();
+            }
 
             return ReturnCommand();
 

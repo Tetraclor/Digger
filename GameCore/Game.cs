@@ -20,6 +20,11 @@ namespace GameCore
             GameState = gameState;
         }
 
+        public List<ICreature> GetCandidates(Point point)
+        {
+            return Candidates[point.X, point.Y].ToList();
+        }
+
         public void CreateCreature(Point point, ICreature creature)
         {
             GameState.SetCreature(point, creature);
