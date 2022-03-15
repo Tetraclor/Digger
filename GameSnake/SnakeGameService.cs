@@ -6,69 +6,6 @@ using System.Linq;
 
 namespace GameSnake
 {
-    public class SnakeBot : IPlayer
-    {
-        public IPlayerCommand GetCommand(IGameStateForPlayer gameState)
-        {
-            var state = (SnakeGameStateForPlayer)gameState;
-            var move = FourDirMove.None;
-
-            var headPoint = state.MySnakeHead;
-            var targetPoint = headPoint;
-
-            var nearApples = headPoint
-               .GetNear()
-               .Where(v => v.IsInBound(gameState))
-               .Where(v => gameState.GetCreatureOrNull(v) is Apple);
-
-            if(nearApples.Any())
-            {
-                targetPoint = nearApples.FirstOrDefault();
-                return ReturnCommand();
-            }
-
-            var nearFree = headPoint
-                .GetNear()
-                .Where(v => v.IsInBound(gameState))
-                .Where(v => gameState.GetCreatureOrNull(v) == null);
-
-
-            if (nearFree.Any())
-            {
-                targetPoint = nearFree.PickRandom();
-            }
-
-            return ReturnCommand();
-
-
-            PlayerCommand ReturnCommand()
-            {
-                move = headPoint.ToDir(targetPoint);
-                return new PlayerCommand() { Move = move };
-            }
-        }
-    }
-
-    public class SnakeGameStateForPlayer : IGameStateForPlayer
-    {
-        private GameState gameState;
-        private Snake snakePlayer;
-
-        public SnakeGameStateForPlayer(GameState gameState, Snake snakePlayer)
-        {
-            this.gameState = gameState;
-            this.snakePlayer = snakePlayer;
-        }
-
-        public int MapWidth => gameState.MapWidth;
-
-        public int MapHeight => gameState.MapHeight;
-
-        public ICreature GetCreatureOrNull(Point point) => gameState.GetCreatureOrNull(point);
-
-        public Point MySnakeHead => snakePlayer.Head.Point;
-        public List<Point> MySnakeBody => snakePlayer.Tail.Select(v => v.Point).ToList();
-    }
 
     public class SnakeGameService : GameService
     {
@@ -104,6 +41,8 @@ namespace GameSnake
                 var headPoint = spawn.NearFreePoint;
 
                 snake = new Snake(game, headPoint);
+                snake.Head.PrevPoint = headPoint;
+
                 return true;
             }
 
@@ -166,12 +105,14 @@ namespace GameSnake
             {
                 var snake = pi.snake;
                 var playerMove = pi.GetPlayerMove(GameState);
-                snake.Move(playerMove, GameState);
+                snake?.Move(playerMove, GameState);
             }
+
+
 
             base.MakeGameTick();
 
-            foreach(var pi in playerInfos.Where(v => v.IsActive))
+            foreach (var pi in playerInfos.Where(v => v.IsActive))
             {
                 if (pi.IsSpawnInProgress)
                 {

@@ -1,6 +1,5 @@
 ﻿using Common;
 using GameCore;
-using GameDigger;
 using GameSnake;
 using System;
 using System.Collections.Generic;
@@ -14,7 +13,8 @@ namespace WinFormsGameView
     public class GameWindow : Form
     {
        // private GameService gameService = new DiggerGameService(DiggerGameService.mapWithPlayerTerrain);
-        private GameService gameService = new SnakeGameService(SnakeGameService.TestMap);
+        private GameService gameService = new SnakeGame2.SnakeGameService(10, 10);
+        //private GameService gameService = new SnakeGameService(SnakeGameService.TestMap);
 
         private readonly HashSet<Keys> pressedKeys = new HashSet<Keys>();
         private UserPlayer userPlayer = new UserPlayer();
@@ -22,18 +22,52 @@ namespace WinFormsGameView
         private int MapWidth;
         private int MapHeight;
 
+        IAnimationManager AnimationManager;
+
+        private int GameTick = 300;
+
         public GameWindow()
         {
-            CreatureAnimation.SpriteSize = 32;
-            CreatureAnimation.AnimationTickLength = 16;
-            InitLocalGame();
-            InitForm(MapWidth, MapHeight);
-            StartGame(LocalGameTimerTick);
+            var bot = ListBotPlayer.DownLeft;
+            var randomBot = new RandomBotPlayer(2);
+            var primitiveBot = new GameSnake.SnakeBot();
+            gameService.AddPlayer(userPlayer);
+            //gameService.AddPlayer(primitiveBot);
+            //gameService.AddPlayer(primitiveBot);
+            //gameService.AddPlayer(primitiveBot);
+
+            StartWithMapAnimate();
+        }
+
+        void StartWithSmoothAnimate()
+        {
+            var animationLength = 16;
+            AnimationManager = new SmoothAnimationManager(animationLength: animationLength, () => {
+                gameService.MakeGameTick();
+                return gameService.GetCreatureTransformations();
+            });
+            InitSizeGame();
+            InitForm(gameService.GameState.MapWidth, gameService.GameState.MapHeight);
+            StartGame(LocalGameSmoothAnimateTimerTick, GameTick / animationLength);
+        }
+
+        void StartWithMapAnimate()
+        {
+            AnimationManager = new MapAnimationManager(() => gameService.GameState.Map);
+            InitSizeGame();
+            InitForm(gameService.GameState.MapWidth, gameService.GameState.MapHeight);
+            StartGame(LocalGameMapAnimateTimerTick, GameTick);
+        }
+
+        void InitSizeGame()
+        {
+            MapWidth = gameService.GameState.MapWidth;
+            MapHeight = gameService.GameState.MapHeight;
         }
 
         void InitForm(int MapWidth, int MapHeight) 
         {
-            var elementSize = CreatureAnimation.SpriteSize;
+            var elementSize = AnimationManager.SpriteSize;
 
             ClientSize = new Size(
                     elementSize * MapWidth,
@@ -42,24 +76,10 @@ namespace WinFormsGameView
             FormBorderStyle = FormBorderStyle.FixedDialog;
         }
 
-        void InitLocalGame()
-        {
-            MapWidth = gameService.GameState.MapWidth;
-            MapHeight = gameService.GameState.MapHeight; 
-
-            var bot = ListBotPlayer.DownLeft;
-            var randomBot = new RandomBotPlayer(2);
-            var primitiveBot = new SnakeBot();
-            gameService.AddPlayer(userPlayer);
-            gameService.AddPlayer(primitiveBot);
-            gameService.AddPlayer(primitiveBot);
-            gameService.AddPlayer(primitiveBot);
-        }
-
-        void StartGame(Action<object, EventArgs> action)
+        void StartGame(Action<object, EventArgs> action, int interval)
         {
             var timer = new Timer();
-            timer.Interval = 15;
+            timer.Interval = interval;
             timer.Tick += (o, e) => action(o, e);
             timer.Start();
         }
@@ -67,7 +87,7 @@ namespace WinFormsGameView
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
-            Text = "Digger";
+            Text = "Snake?";
             DoubleBuffered = true;
         }
 
@@ -85,49 +105,28 @@ namespace WinFormsGameView
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            var elementSize = CreatureAnimation.SpriteSize;
+            var elementSize = AnimationManager.SpriteSize;
 
-            e.Graphics.TranslateTransform(0, elementSize);
+            e.Graphics.TranslateTransform(0, 0);
             e.Graphics.FillRectangle(
                 Brushes.Black, 0, 0, elementSize * MapWidth, elementSize * MapHeight);
 
-            for (int i = 0; i < CreatureAnimation.Animations.Count; i++)
-            {
-                var a = CreatureAnimation.Animations[i];
-                e.Graphics.DrawImage(a.Sprite, a.DrawLocation);
-            }
+            AnimationManager.Draw(e.Graphics);
 
             e.Graphics.ResetTransform();
-           // e.Graphics.DrawString(GameState.Scores.ToString(), new Font("Arial", 16), Brushes.Green, 0, 0);
         }
 
-
-        private void LocalGameTimerTick(object sender, EventArgs args)
+        private void LocalGameSmoothAnimateTimerTick(object sender, EventArgs args)
         {
-            if (CreatureAnimation.AnimationTickCount == 0)
-            {
-                gameService.MakeGameTick();
-
-                CreatureAnimation.Animations = gameService.Game.Animations
-                    .Select(v => new CreatureAnimation(v))
-                    .ToList();
-            }
-               
-            CreatureAnimation.Tick(MapWidth, MapHeight);
-
+            AnimationManager.Tick(MapWidth, MapHeight);
             Invalidate();
         }
-    }
 
-    static class CreatureImageNameGetter
-    {
-        public static string Get(Terrain _) => "Terrain.png";
-        public static string Get(Digger _) => "Digger.png";
-        public static string Get(HeadSnake _) => "HeadSnake.png";
-        public static string Get(BodySnake _) => "BodySnake.png";
-        public static string Get(Apple _) => "Apple.png";
-        public static string Get(Wall _) => "Terrain.png";
-        public static string Get(Spawn _) => "Spawn.png";
+        private void LocalGameMapAnimateTimerTick(object sender, EventArgs args)
+        {
+            gameService.MakeGameTick();
+            Invalidate();
+        }
     }
 
     public class UserPlayer : IPlayer

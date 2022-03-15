@@ -8,10 +8,12 @@ namespace GameCore
 {
     public class Game
     {
-        public List<CreatureTransformation> Animations = new List<CreatureTransformation>();
-
-
+        public List<CreatureTransformation> Transformations = new List<CreatureTransformation>();
+        public List<CreatureTransformation> Temp = new List<CreatureTransformation>();
         public List<ICreature>[,] Candidates;
+
+        public bool NowEndAct = false;
+        public bool NowBeginAct = false;
 
         public GameState GameState { get; }
 
@@ -27,24 +29,61 @@ namespace GameCore
 
         public void CreateCreature(Point point, ICreature creature)
         {
-            GameState.SetCreature(point, creature);
+            if (NowBeginAct)
+            {
+                Transformations.Add(new CreatureTransformation(point, creature));
+                return;
+            }
+            else if(NowEndAct == false)
+            {
+                Temp.Add(new CreatureTransformation(point, creature));
+                return;
+            }
+            if(CandidateDict.TryGetValue(point, out CandidatesInfo info))
+            {
+                info.Candidates.Add(creature);
+            }
+            else
+            {
+                var candInfo = new CandidatesInfo() { 
+                    Point = point, 
+                    Candidates = new List<ICreature> { creature } 
+                };
+                var creatureInMap = GameState.GetCreatureOrNull(point);
+                if (creatureInMap != null) candInfo.Candidates.Add(creatureInMap);
+                CandidateDict[point] = candInfo;
+                CandidatesQueue.Enqueue(candInfo);
+            }
         }
 
         public void DeleteCreature(ICreature creature)
         {
-            if(GameState.CreaturesLocations.TryGetValue(creature, out Point location))
-                DeleteCreature(location);
+            if (GameState.CreaturesLocations.TryGetValue(creature, out Point location))
+            if (CandidateDict.TryGetValue(location, out CandidatesInfo info))
+            {
+                info.Candidates.Remove(creature);
+            }
+            var cand = Candidates[location.X, location.Y];
+            cand.Remove(creature);
+            var del = Transformations.Where(v => v.Creature == creature).FirstOrDefault();
+            Transformations.Remove(del);
+            GameState.SetCreature(location, null);
         }
 
         public void DeleteCreature(Point point)
         {
+            CandidateDict.Remove(point);
             GameState.SetCreature(point, null);
         }
 
         public void BeginAct()
         {
+            NowBeginAct = true;
             GameState.CreaturesLocations.Clear();
-            Animations.Clear();
+            Transformations.Clear();
+
+            Transformations.AddRange(Temp);
+            Temp.Clear();
 
             for (var x = 0; x < GameState.MapWidth; x++)
                 for (var y = 0; y < GameState.MapHeight; y++)
@@ -63,7 +102,7 @@ namespace GameCore
                         y + command.DeltaY >= GameState.MapHeight)
                         throw new Exception($"The object {creature.GetType()} falls out of the game field");
 
-                    Animations.Add(
+                    Transformations.Add(
                         new CreatureTransformation
                         {
                             Command = command,
@@ -73,15 +112,36 @@ namespace GameCore
                         });
                 }
 
-            Animations = Animations.OrderByDescending(z => z.Creature.TransformPriority()).ToList();
+            Transformations = Transformations.OrderByDescending(z => z.Creature.TransformPriority()).ToList();
+            NowBeginAct = false;
         }
+
+        class CandidatesInfo
+        {
+            public Point Point;
+            public List<ICreature> Candidates = new List<ICreature>();
+        }
+
+        Dictionary<Point, CandidatesInfo> CandidateDict = new();
+        Queue<CandidatesInfo> CandidatesQueue = new();
 
         public void EndAct()
         {
+            NowEndAct = true;
+            CandidateDict.Clear();
+
             Candidates = GetCandidatesPerLocation();
             for (var x = 0; x < GameState.MapWidth; x++)
                 for (var y = 0; y < GameState.MapHeight; y++)
                     GameState.SetCreature(new Point(x, y), SelectWinnerCandidatePerLocation(Candidates[x, y]));
+
+            while(CandidatesQueue.Count != 0)
+            {
+                var info = CandidatesQueue.Dequeue();
+                CandidateDict.Remove(info.Point);
+                GameState.SetCreature(info.Point, SelectWinnerCandidatePerLocation(info.Candidates));
+            }
+            NowEndAct = false;
         }
 
         private List<ICreature>[,] GetCandidatesPerLocation()
@@ -91,7 +151,7 @@ namespace GameCore
                 for (var y = 0; y < GameState.MapHeight; y++)
                     creatures[x, y] = new List<ICreature>();
 
-            foreach (var e in Animations)
+            foreach (var e in Transformations)
             {
                 var x = e.TargetLogicalLocation.X;
                 var y = e.TargetLogicalLocation.Y;

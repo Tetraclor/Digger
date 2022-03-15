@@ -20,13 +20,13 @@ namespace GameSnake
             Game = game;
             Head = new HeadSnake(this, head);
             Head.PrevPoint = tail.FirstOrDefault();
-            game.GameState.SetCreature(Head.Point, Head);
+            game.CreateCreature(Head.Point, Head);
 
             foreach (var point in tail)
             {
                 var body = new BodySnake(this, point);
                 Tail.Add(body);
-                game.GameState.SetCreature(point, body);
+                game.CreateCreature(point, body);
             }
         }
 
@@ -46,8 +46,9 @@ namespace GameSnake
         public void Dead()
         {
             IsDead = true;
-            Game.DeleteCreature(Head.Point);
-            Tail.ForEach(v => Game.DeleteCreature(v.Point));
+            Game.DeleteCreature(Head);
+            Tail.ForEach(v => Game.DeleteCreature(v));
+            Tail.ForEach(v => v.IsDead = true);
         }
 
         public void AddTailItem()
@@ -74,13 +75,6 @@ namespace GameSnake
 
         private void Move(Point target)
         {
-            var creature = this.Game.GameState.GetCreatureOrNull(target); // Current
-
-            if (creature == null)                                          // Future
-                creature = Game.GetCandidates(target).FirstOrDefault();
-
-            SolveConflicted(creature);
-
             Head.PrevPoint = Head.Point;
             Head.Point = target;
 
@@ -94,7 +88,7 @@ namespace GameSnake
             }
         }
 
-        private void SolveConflicted(ICreature creature)
+        public void SolveConflicted(ICreature creature)
         {
             if (IsDead) return;
 
@@ -147,11 +141,16 @@ namespace GameSnake
         {
             Snake = snake;
             Point = point;
+            PrevPoint = point;
         }
 
         public CreatureCommand Act(GameState game, int x, int y) => PrevPoint.ToCreatureCommand(Point);
 
-        public bool DeadInConflict(ICreature conflictedObject) => false;
+        public bool DeadInConflict(ICreature conflictedObject)
+        {
+            Snake.SolveConflicted(conflictedObject);
+            return Snake.IsDead;
+        }
 
         public int TransformPriority() => 1;
     }
@@ -167,6 +166,7 @@ namespace GameSnake
         {
             Snake = snake;
             Point = point;
+            PrevPoint = point;
         }
 
         public CreatureCommand Act(GameState game, int x, int y) => 
@@ -174,7 +174,11 @@ namespace GameSnake
             new CreatureCommand()  :
             PrevPoint.ToCreatureCommand(Point);
 
-        public bool DeadInConflict(ICreature conflictedObject) => IsDead;
+        public bool DeadInConflict(ICreature conflictedObject) 
+        {
+            Snake.SolveConflicted(conflictedObject);
+            return IsDead;
+        }
 
         public int TransformPriority() => 1;
     }

@@ -6,9 +6,8 @@ using System.Threading.Tasks;
 
 namespace GameCore
 {
-    public class GameState : IGameStateForPlayer
+    public class GameState
     {
-
         public Dictionary<ICreature, Point> CreaturesLocations = new Dictionary<ICreature, Point>();
         public readonly ICreature[,] Map;
         public int Scores { get; set; }

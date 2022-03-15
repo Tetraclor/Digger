@@ -1,8 +1,9 @@
-﻿using System;
+﻿using GameCore;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace GameCore
+namespace Common
 {
     public abstract class GameService
     {
@@ -52,8 +53,25 @@ namespace GameCore
             Game.EndAct();
             CurrentTick++;
         }
+
+        public virtual string ToStringMap()
+        {
+            return CreatureMapCreator.MapToString(this.GameState.Map);
+        }
+
+        public virtual List<CreatureTransformation> GetCreatureTransformations()
+        {
+            return Game.Transformations;
+        }
+
         public abstract bool AddPlayer(IPlayer player);
-        public abstract IPlayerCommand ParsePlayerCommand(string command);
+        public virtual IPlayerCommand ParsePlayerCommand(string command)
+        {
+            var move = Enum.Parse<FourDirMove>(command, true);
+            var playerCommand = new PlayerCommand() { Move = move };
+
+            return playerCommand;
+        }
     }
 
     public interface IPlayer
