@@ -120,7 +120,7 @@ WWWWW WWWWWWWWWW WWWWW
 
         public override void MakeGameTick()
         {
-            ClearMap();
+            
 
             foreach (var snakeSpawner in SnakeSpawners.Where(v => v.IsActive))
             {
@@ -150,6 +150,12 @@ WWWWW WWWWWWWWWW WWWWW
                 }
             }
 
+            if(ApplesManager.MaxApplesCount > ApplesManager.apples.Count)
+            {
+                ApplesManager.CreateRandomApple();
+            }
+
+            ClearMap();
             PrintToMap();
 
             foreach (var snakeSpawner in SnakeSpawners.Where(v => v.IsActive))
@@ -159,6 +165,38 @@ WWWWW WWWWWWWWWW WWWWW
                 if (WallManager.IsWalkable(snake.Head) == false)// State Points Check
                 {
                     snake.Dead();
+                }
+
+                foreach (var otherSnakeSpawner in SnakeSpawners.Where(v => v.IsActive && v != snakeSpawner))
+                {
+                    var otherSnake = otherSnakeSpawner.SpawnedSnake;
+                    if (snake.Head == otherSnake.Head)
+                    {
+                        var thisCount = snake.Body.Count;
+                        var otherCount = snake.Body.Count;
+
+                        var delta = Math.Abs(thisCount - otherCount);
+
+                        if (delta < 2)
+                        {
+                            snake.Dead();
+                            otherSnake.Dead();
+                        }
+                        else if (thisCount > otherCount)
+                        {
+                            snake.CutTail(snake.Body[delta]);
+                            otherSnake.Dead();
+                        }
+                        else if (thisCount < otherCount)
+                        {
+                            snake.Dead();
+                            otherSnake.CutTail(otherSnake.Body[delta]);
+                        }
+                    }
+                    else if (otherSnake.Body.Contains(snake.Head))
+                    {
+                        snake.Dead();
+                    }
                 }
             }
         }
@@ -355,10 +393,12 @@ WWWWW WWWWWWWWWW WWWWW
     {
         private Random Random = new Random();
         private GameState gameState;
+        public int MaxApplesCount;
         public HashSet<Point> apples = new HashSet<Point>();
 
         public ApplesManager(GameState gameState, int applesCount)
         {
+            MaxApplesCount = applesCount;
             this.gameState = gameState;
 
             for (int i = 0; i < applesCount; i++)
