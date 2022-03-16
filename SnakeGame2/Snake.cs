@@ -8,6 +8,33 @@ using System.Threading.Tasks;
 
 namespace SnakeGame2
 {
+
+    public class SnakeGameStateForPlayer : ISnakeGameStateForPlayer
+    {
+        private GameState gameState;
+        private Snake snakePlayer;
+
+        public SnakeGameStateForPlayer(GameState gameState, Snake snakePlayer)
+        {
+            this.gameState = gameState;
+            this.snakePlayer = snakePlayer;
+        }
+
+        public int MapWidth => gameState.MapWidth;
+
+        public int MapHeight => gameState.MapHeight;
+
+        public ICreature GetCreatureOrNull(Point point) => gameState.GetCreatureOrNull(point);
+
+        public bool IsApple(Point point)
+        {
+            return gameState.GetCreatureOrNull(point) is Apple;
+        }
+
+        public Point MySnakeHead => snakePlayer.Head;
+        public List<Point> MySnakeBody => snakePlayer.Body.ToList();
+    }
+
     public class SnakeGameService : GameService, IGameStateForPlayer
     {
         public ApplesManager ApplesManager;
@@ -95,9 +122,9 @@ WWWWW WWWWWWWWWW WWWWW
             }
         }
 
-        private FourDirMove GetSnakeMove(IPlayer player)
+        private FourDirMove GetSnakeMove(IPlayer player, Snake snake)
         {
-            var playerCommand = (PlayerCommand)player.GetCommand(this);
+            var playerCommand = (PlayerCommand)player.GetCommand( new SnakeGameStateForPlayer(this.GameState, snake));
             var move = FourDirMove.None;
 
             if (playerCommand != null)
@@ -120,7 +147,8 @@ WWWWW WWWWWWWWWW WWWWW
 
         public override void MakeGameTick()
         {
-            
+            ClearMap();
+            PrintToMap();
 
             foreach (var snakeSpawner in SnakeSpawners.Where(v => v.IsActive))
             {
@@ -129,7 +157,7 @@ WWWWW WWWWWWWWWW WWWWW
                 // ACT
                 if (snake.IsDead == false)
                 {
-                    var move = GetSnakeMove(snakeSpawner.Player);
+                    var move = GetSnakeMove(snakeSpawner.Player, snake);
                     snake.Move(move, GameState);// State Points Change
                 }
 
