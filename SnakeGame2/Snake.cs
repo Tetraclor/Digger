@@ -10,22 +10,22 @@ namespace SnakeGame2
 {
     public class SnakeGameService : GameService, IGameStateForPlayer
     {
-        Snake Snake;
-        ApplesManager ApplesManager;
-        WallManager WallManager;
+        public SnakeSpawner SnakeSpawner;
+        public Snake Snake;
+        public ApplesManager ApplesManager;
+        public NotWalkableManager WallManager;
 
         IPlayer Player;
         List<ITransformAble> transforms = new();
         List<IMapAble> mapAble = new();
 
         public int MapWidth => GameState.MapWidth;
-
         public int MapHeight => GameState.MapHeight;
 
         public SnakeGameService(int width, int height) : base(width, height, typeof(Snake))
         {
             ApplesManager = new ApplesManager(GameState, 10);
-            WallManager = new WallManager();
+            WallManager = new NotWalkableManager();
             Init();
         }
 
@@ -33,7 +33,7 @@ namespace SnakeGame2
 WWWWWW WWWWWW
 W           W
 W           W
-W           W
+S           W
 W           W
 W           W
       W      
@@ -48,11 +48,12 @@ WWWWWW WWWWWW
         public SnakeGameService(string mapString = TestMap) : base(mapString, typeof(Snake))
         {
             ApplesManager = new ApplesManager(GameState, 10);
-            WallManager = new WallManager();
-            GameState.Map.ForEach((p, c) => { 
-                if (c is Wall)
-                    WallManager.Walls.Add(p); 
-            });
+
+            var spawnPoints = GameState.Map.GetAllLocations<Spawn>().ToList();
+
+            WallManager = new NotWalkableManager(GameState.Map.GetAllLocations<Wall>(), spawnPoints);
+
+            SnakeSpawner = new SnakeSpawner(spawnPoints[0]);
             Init();
         }
 
@@ -69,10 +70,30 @@ WWWWWW WWWWWW
             return true;
         }
 
-        public void SnakeSpawn()
+        private void SnakeSpawn()
         {
-            Snake = new Snake(new Point(2, 2), new Point(1, 2));
-            mapAble.Add(Snake);
+            if (SnakeSpawner.Spawn(this, IsFreePoint) == false) 
+                return;
+            
+            Snake = SnakeSpawner.SpawnedSnake;
+            if(mapAble.Contains(Snake) == false)
+                mapAble.Add(Snake);
+
+            bool IsFreePoint(Point point)
+            {
+                return WallManager.IsWalkable(point);
+            }
+        }
+
+        private FourDirMove GetSnakeMove()
+        {
+            var playerCommand = (PlayerCommand)Player.GetCommand(this);
+            var move = FourDirMove.None;
+
+            if (playerCommand != null)
+                move = playerCommand.Move;
+
+            return move;
         }
 
         public override List<CreatureTransformation> GetCreatureTransformations()
@@ -92,16 +113,15 @@ WWWWWW WWWWWW
             ClearMap();
 
             // ACT
-            var playerCommand= (PlayerCommand)Player.GetCommand(this);
-            var move = FourDirMove.None;
-
-            if (playerCommand != null)
-                move = playerCommand.Move;
-
-            Snake.Move(move, GameState); // State Points Change
+            if (Snake.IsDead == false)
+            {
+                var move = GetSnakeMove();
+                Snake.Move(move, GameState);// State Points Change
+            }
 
             // ------ Handle Conflict --------
-            if (Snake.IsDead)
+
+            if (Snake.IsDead || SnakeSpawner.InProgress)
                 SnakeSpawn();
 
             // Eat apple
@@ -116,17 +136,10 @@ WWWWWW WWWWWW
                 Snake.CutTail(Snake.Head); // Delete Points
             }
 
-            // Print to map
-            foreach (var item in mapAble)
-            {
-                item.SetToMap((point, creature) =>
-                {
-                    GameState.SetCreature(point, creature);
-                });
-            }
+            PrintToMap();
 
             // Wall Check
-            if (WallManager.Walls.Contains(Snake.Head))// State Points Check
+            if (WallManager.IsWalkable(Snake.Head) == false)// State Points Check
             {
                 Snake.Dead();
             }
@@ -140,6 +153,17 @@ WWWWWW WWWWWW
                 {
                     GameState.Map[j, i] = null;
                 }
+            }
+        }
+
+        private void PrintToMap()
+        {
+            foreach (var item in mapAble)
+            {
+                item.SetToMap((point, creature) =>
+                {
+                    GameState.SetCreature(point, creature);
+                });
             }
         }
 
@@ -157,6 +181,57 @@ WWWWWW WWWWWW
     public interface IMapAble
     { 
         void SetToMap(Action<Point, ICreature> set);
+    }
+
+    public class SnakeSpawner
+    {
+        public Point Point;
+        public Snake SpawnedSnake;
+        public bool InProgress;
+        public int InitSnakeBodyLength = 2;
+        public int CurrentSnakeBodyLength => SpawnedSnake.Body.Count;
+
+        public SnakeSpawner(Point point)
+        {
+            Point = point;
+        }
+
+        public bool Spawn(SnakeGameService gameState, Func<Point, bool> IsFreePoint)
+        {
+            if (SpawnedSnake != null && SpawnedSnake.IsDead) // if very fast dead 
+            {
+                InProgress = false;
+            }
+
+            if (InProgress == false)
+            {
+                var freePoints = Point.GetNear()
+                    .Where(v => v.IsInBound(gameState))
+                    .Where(v => IsFreePoint(v))
+                    .ToList();
+
+                if (freePoints.Count == 0)
+                    return false;
+
+
+                var freePoint = freePoints.First();
+                SpawnedSnake = new Snake(freePoint);
+                InProgress = true;
+
+                return true;
+            }
+
+            if(CurrentSnakeBodyLength < InitSnakeBodyLength)
+            {
+                SpawnedSnake.AddTail();
+            }
+            else
+            {
+                InProgress = false;
+            }
+
+            return true;
+        }
     }
 
     public class Snake : IMapAble
@@ -216,13 +291,15 @@ WWWWWW WWWWWW
             }
 
             var next = Head;
-            PrevLastTailPosition = Body[^1];
+       
             for (int i = 0; i < Body.Count; i++)
             {
                 var temp = Body[i];
                 Body[i] = next;
                 next = temp;
             }
+
+            PrevLastTailPosition = next;
 
             Head = target;
             PrevMove = move;
@@ -315,6 +392,34 @@ WWWWWW WWWWWW
         }
     }
 
+    public class NotWalkableManager : IMapAble
+    {
+        public HashSet<Point> Walls = new();
+        public HashSet<Point> Spawns = new();
+
+        public NotWalkableManager()
+        {
+        }
+
+        public NotWalkableManager(IEnumerable<Point> walls, IEnumerable<Point> spawns)
+        {
+            Walls = walls.ToHashSet();
+            Spawns = spawns.ToHashSet();
+        }
+
+        public bool IsWalkable(Point point)
+        {
+            return !Walls.Contains(point) && !Spawns.Contains(point);
+        }
+
+        public void SetToMap(Action<Point, ICreature> set)
+        {
+            foreach (var p in Walls)
+                set(p, new Wall());
+            foreach (var p in Spawns)
+                set(p, new Spawn());
+        }
+    }
 
     public class HeadSnake : Fict
     {
@@ -332,15 +437,8 @@ WWWWWW WWWWWW
     {
     }
 
-    public class WallManager : IMapAble
+    public class Spawn : Fict
     {
-        public HashSet<Point> Walls = new();
-
-        public void SetToMap(Action<Point, ICreature> set)
-        {
-            foreach (var p in Walls)
-                set(p, new Wall());
-        }
     }
 
     public abstract class Fict : ICreature

@@ -124,6 +124,20 @@ namespace Common
             }
         }
 
+        public static IEnumerable<Point> GetAllLocations<T>(this ICreature[,] map)
+        {
+            var w = map.GetLength(0);
+            var h = map.GetLength(1);
+            for (int i = 0; i < w; i++)
+            {
+                for (int j = 0; j < h; j++)
+                {
+                    if(map[i, j] is T)
+                        yield return new Point(i, j);
+                }
+            }
+        }
+
         public static CreatureCommand ToCreatureCommand(this Point point, Point target)
         {
             return new CreatureCommand() { DeltaX = target.X - point.X, DeltaY = target.Y - point.Y };
