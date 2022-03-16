@@ -11,6 +11,8 @@ namespace SnakeGame2
     public class SnakeGameService : GameService, IGameStateForPlayer
     {
         Snake Snake;
+        ApplesManager ApplesManager;
+
         IPlayer Player;
         List<ITransformAble> transforms = new();
         List<IMapAble> mapAble = new();
@@ -21,6 +23,8 @@ namespace SnakeGame2
 
         public SnakeGameService(int width, int height) : base(width, height, typeof(Snake))
         {
+            ApplesManager = new ApplesManager(GameState, 10);
+            mapAble.Add(ApplesManager);
         }
 
         public override bool AddPlayer(IPlayer player)
@@ -47,10 +51,25 @@ namespace SnakeGame2
         {
             ClearMap();
 
+            // ACT
             var move = (PlayerCommand)Player.GetCommand(this);
-            Snake.Move(move.Move, GameState);
+            Snake.Move(move.Move, GameState); // State Points Change
 
-            mapAble.ForEach(v => v.SetToMap(GameState));
+            // Handle Conflict
+            if (ApplesManager.apples.Contains(Snake.Head)) // State Points Check
+            {
+                ApplesManager.AppleDead(Snake.Head); // State Points Change
+                Snake.AddTail(); // State Points Change
+            }
+
+            // Print to map
+            foreach (var item in mapAble)
+            {
+                item.SetToMap((point, creature) =>
+                {
+                    GameState.SetCreature(point, creature);
+                });
+            }
         }
 
         private void ClearMap()
@@ -76,29 +95,33 @@ namespace SnakeGame2
     }
 
     public interface IMapAble
-    {
-        void SetToMap(GameState gameState);
+    { 
+        void SetToMap(Action<Point, ICreature> set);
     }
 
     public class Snake : IMapAble
     {
         public Point Head;
-        public Queue<Point> Body = new();
+        public List<Point> Body = new();
         public Point PrevLastTailPosition;
+        public Point PrevHead;
 
         public Snake(Point head, params Point[] body)
         {
             Head = head;
 
+            if (body.Length != 0)
+                PrevHead = body[0];
+
             foreach (var item in body)
             {
-                Body.Enqueue(item);
+                Body.Add(item);
             }
         }
 
         public void AddTail()
         {
-            Body.Enqueue(PrevLastTailPosition);
+            Body.Add(PrevLastTailPosition);
         }
 
         private FourDirMove PrevMove = FourDirMove.Right;
@@ -108,28 +131,27 @@ namespace SnakeGame2
             var target = Head
                 .PointWithDir(move)
                 .TorSpace(gameState);
-            
-            if (target == Head || target == Body.Last()) // Check move back
+
+            if (target == Head || target == PrevHead) // Check move back
             {
                 move = PrevMove;
                 target = Head
                     .PointWithDir(move)
                     .TorSpace(gameState);
             }
-            PrevLastTailPosition = Body.Dequeue();
-            Body.Enqueue(Head);
 
+            var next = Head;
+            PrevLastTailPosition = Body[^1];
+            for (int i = 0; i < Body.Count; i++)
+            {
+                var temp = Body[i];
+                Body[i] = next;
+                next = temp;
+            }
+
+            PrevHead = Head;
             Head = target;
             PrevMove = move;
-        }
-
-        public void SetToMap(GameState gameState)
-        {
-            gameState.SetCreature(Head, new HeadSnake());
-            foreach (var item in Body)
-            {
-                gameState.SetCreature(item, new BodySnake());
-            }
         }
 
         public IEnumerable<CreatureTransformation> ToTransformation()
@@ -138,10 +160,81 @@ namespace SnakeGame2
             yield return new CreatureTransformation(new HeadSnake(), prevHead, Head);
 
             var prev = PrevLastTailPosition;
-            foreach(var item in Body)
+            foreach (var item in Body)
             {
                 yield return new CreatureTransformation(new BodySnake(), prev, item);
                 prev = item;
+            }
+        }
+
+        public void SetToMap(Action<Point, ICreature> set)
+        {
+            set(Head, new HeadSnake());
+            foreach (var item in Body)
+            {
+                set(item, new BodySnake());
+            }
+        }
+    }
+
+    public class ApplesManager : IMapAble
+    {
+        private Random Random = new Random();
+        private GameState gameState;
+        public HashSet<Point> apples = new HashSet<Point>();
+
+        public ApplesManager(GameState gameState, int applesCount)
+        {
+            this.gameState = gameState;
+
+            for (int i = 0; i < applesCount; i++)
+            {
+                CreateRandomApple();
+            }
+        }
+
+        public ApplesManager(GameState gameState, params Point[] apples)
+        {
+            this.gameState = gameState;
+
+            foreach (var p in apples)
+            {
+                CreateApple(p);
+            }
+        }
+
+        public void AppleDead(Point apple)
+        {
+            if (apples.Contains(apple) == false) return;
+            apples.Remove(apple);
+            CreateRandomApple();
+        }
+
+        public void CreateRandomApple()
+        {
+            var x = Random.Next(gameState.MapWidth - 1);
+            var y = Random.Next(gameState.MapWidth - 1);
+
+            var p = new Point(x, y);
+
+            CreateApple(p);
+        }
+
+        public void CreateApple(Point point)
+        {
+            var creature = gameState.GetCreatureOrNull(point);
+            if (creature != null)
+            {
+                return;
+            }
+            apples.Add(point);
+        }
+
+        public void SetToMap(Action<Point, ICreature> set)
+        {
+            foreach (var item in apples)
+            {
+                set(item, new Apple());
             }
         }
     }
