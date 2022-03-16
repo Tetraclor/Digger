@@ -16,7 +16,12 @@ namespace WebApi
         int GameTickMs = 300;
 
         static System.Timers.Timer timer = new System.Timers.Timer();
-        static RemotePlayer remotePlayer = new RemotePlayer();
+
+        static Dictionary<string, RemotePlayer> RemotePlayers = new Dictionary<string, RemotePlayer>();
+
+        static IPlayer randomBot = new RandomBotPlayer(23);
+        static IPlayer snakeBot = new SnakeBot();
+
         //static GameService gameService = new SnakeGameService(SnakeGameService.TestMap);
         static GameService gameService = new SnakeGame2.SnakeGameService();
         //static GameService gameService = new DiggerGameService(DiggerGameService.mapWithPlayerTerrain);
@@ -33,36 +38,39 @@ namespace WebApi
             if (command == null)
                 return;
 
+            var remotePlayer = RemotePlayers[this.Context.ConnectionId];
             var playerCommand = gameService.ParsePlayerCommand(command);
             remotePlayer.PlayerCommand = playerCommand;  
         }
 
+        static bool IsFirstStart = true;
+
         public void StartGame()
         {
-            remotePlayer = new RemotePlayer();
-            var randomPlayer = new RandomBotPlayer(23);
-            var snakePlayer = new SnakeBot();
-
-            gameService.AddPlayer(remotePlayer);
-            //gameService.AddPlayer(snakePlayer);
-            //gameService.AddPlayer(snakePlayer);
-            //gameService.AddPlayer(snakePlayer);
-
-            timer.Stop();
-            timer = new System.Timers.Timer();
-
-            timer.Elapsed += (o, e) => aTimer_Elapsed();
-            timer.Interval = GameTickMs;
-            timer.Enabled = true;
-
-            aTimer_Elapsed();
-
-            void aTimer_Elapsed()
+            if (IsFirstStart)
             {
-                gameService.MakeGameTick();
-                var stringMap = gameService.GameState.Map.MapToString();
-                hubContext.Clients.All.SendAsync("Receive", stringMap, gameService.CurrentTick);
+                timer.Stop();
+                timer = new System.Timers.Timer();
+
+                timer.Elapsed += (o, e) => GameTick();
+                timer.Interval = GameTickMs;
+                timer.Enabled = true;
+
+                GameTick();
             }
+
+            IsFirstStart = false;
+
+            var remotePlayer = new RemotePlayer();
+            gameService.AddPlayer(remotePlayer);
+            RemotePlayers[this.Context.ConnectionId] = remotePlayer;
+        }
+
+        void GameTick()
+        {
+            gameService.MakeGameTick();
+            var stringMap = gameService.GameState.Map.MapToString();
+            hubContext.Clients.All.SendAsync("Receive", stringMap, gameService.CurrentTick);
         }
 
         public void StopGame()
