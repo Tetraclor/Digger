@@ -38,7 +38,9 @@ namespace WebApi
             if (command == null)
                 return;
 
-            var remotePlayer = RemotePlayers[this.Context.ConnectionId];
+            if (RemotePlayers.TryGetValue(this.Context.ConnectionId, out RemotePlayer remotePlayer) == false)
+                return;
+
             var playerCommand = gameService.ParsePlayerCommand(command);
             remotePlayer.PlayerCommand = playerCommand;  
         }
@@ -76,6 +78,9 @@ namespace WebApi
         public void StopGame()
         {
             timer.Stop();
+            IsFirstStart = true;
+            RemotePlayers.Clear();
+            gameService = new SnakeGame2.SnakeGameService();
         }
     }
 }
