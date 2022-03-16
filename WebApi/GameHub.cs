@@ -17,7 +17,8 @@ namespace WebApi
 
         static System.Timers.Timer timer = new System.Timers.Timer();
         static RemotePlayer remotePlayer = new RemotePlayer();
-        static GameService gameService = new SnakeGameService(SnakeGameService.TestMap);
+        //static GameService gameService = new SnakeGameService(SnakeGameService.TestMap);
+        static GameService gameService = new SnakeGame2.SnakeGameService();
         //static GameService gameService = new DiggerGameService(DiggerGameService.mapWithPlayerTerrain);
 
         IHubContext<GameHub> hubContext { get; }
@@ -43,9 +44,9 @@ namespace WebApi
             var snakePlayer = new SnakeBot();
 
             gameService.AddPlayer(remotePlayer);
-            gameService.AddPlayer(snakePlayer);
-            gameService.AddPlayer(snakePlayer);
-            gameService.AddPlayer(snakePlayer);
+            //gameService.AddPlayer(snakePlayer);
+            //gameService.AddPlayer(snakePlayer);
+            //gameService.AddPlayer(snakePlayer);
 
             timer.Stop();
             timer = new System.Timers.Timer();

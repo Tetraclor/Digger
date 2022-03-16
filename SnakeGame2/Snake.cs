@@ -12,6 +12,7 @@ namespace SnakeGame2
     {
         Snake Snake;
         ApplesManager ApplesManager;
+        WallManager WallManager;
 
         IPlayer Player;
         List<ITransformAble> transforms = new();
@@ -24,15 +25,54 @@ namespace SnakeGame2
         public SnakeGameService(int width, int height) : base(width, height, typeof(Snake))
         {
             ApplesManager = new ApplesManager(GameState, 10);
+            WallManager = new WallManager();
+            Init();
+        }
+
+        public const string TestMap = @"
+WWWWWW WWWWWW
+W           W
+W           W
+W           W
+W           W
+W           W
+      W      
+W           W
+W           W
+W           W
+W           W
+W           W
+WWWWWW WWWWWW
+";
+
+        public SnakeGameService(string mapString = TestMap) : base(mapString, typeof(Snake))
+        {
+            ApplesManager = new ApplesManager(GameState, 10);
+            WallManager = new WallManager();
+            GameState.Map.ForEach((p, c) => { 
+                if (c is Wall)
+                    WallManager.Walls.Add(p); 
+            });
+            Init();
+        }
+
+        private void Init()
+        {
             mapAble.Add(ApplesManager);
+            mapAble.Add(WallManager);
         }
 
         public override bool AddPlayer(IPlayer player)
         {
             Player = player;
+            SnakeSpawn();
+            return true;
+        }
+
+        public void SnakeSpawn()
+        {
             Snake = new Snake(new Point(2, 2), new Point(1, 2));
             mapAble.Add(Snake);
-            return true;
         }
 
         public override List<CreatureTransformation> GetCreatureTransformations()
@@ -52,10 +92,18 @@ namespace SnakeGame2
             ClearMap();
 
             // ACT
-            var move = (PlayerCommand)Player.GetCommand(this);
-            Snake.Move(move.Move, GameState); // State Points Change
+            var playerCommand= (PlayerCommand)Player.GetCommand(this);
+            var move = FourDirMove.None;
+
+            if (playerCommand != null)
+                move = playerCommand.Move;
+
+            Snake.Move(move, GameState); // State Points Change
 
             // ------ Handle Conflict --------
+            if (Snake.IsDead)
+                SnakeSpawn();
+
             // Eat apple
             if (ApplesManager.apples.Contains(Snake.Head)) // State Points Check
             {
@@ -75,6 +123,12 @@ namespace SnakeGame2
                 {
                     GameState.SetCreature(point, creature);
                 });
+            }
+
+            // Wall Check
+            if (WallManager.Walls.Contains(Snake.Head))// State Points Check
+            {
+                Snake.Dead();
             }
         }
 
@@ -110,7 +164,8 @@ namespace SnakeGame2
         public Point Head;
         public List<Point> Body = new();
         public Point PrevLastTailPosition;
-        public Point PrevHead => Body.First();
+        public Point PrevHead => Body.FirstOrDefault();
+        public bool IsDead { get; private set; }
 
         public Snake(Point head, params Point[] body)
         {
@@ -135,10 +190,19 @@ namespace SnakeGame2
             Body.RemoveRange(index, Body.Count - index);
         }
 
+        public void Dead()
+        {
+            IsDead = true;
+            Head = new Point(-1, -1);
+            Body.Clear();
+        }
+
         private FourDirMove PrevMove = FourDirMove.Right;
 
         public void Move(FourDirMove move, GameState gameState)
         {
+            if (IsDead) return;
+
             var target = Head
                 .PointWithDir(move)
                 .TorSpace(gameState);
@@ -179,6 +243,8 @@ namespace SnakeGame2
 
         public void SetToMap(Action<Point, ICreature> set)
         {
+            if (IsDead) return;
+
             set(Head, new HeadSnake());
             foreach (var item in Body)
             {
@@ -249,6 +315,7 @@ namespace SnakeGame2
         }
     }
 
+
     public class HeadSnake : Fict
     {
     }
@@ -259,6 +326,21 @@ namespace SnakeGame2
 
     public class Apple : Fict
     {
+    }
+
+    public class Wall : Fict
+    {
+    }
+
+    public class WallManager : IMapAble
+    {
+        public HashSet<Point> Walls = new();
+
+        public void SetToMap(Action<Point, ICreature> set)
+        {
+            foreach (var p in Walls)
+                set(p, new Wall());
+        }
     }
 
     public abstract class Fict : ICreature

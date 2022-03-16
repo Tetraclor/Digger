@@ -13,7 +13,7 @@ namespace WinFormsGameView
     public class GameWindow : Form
     {
        // private GameService gameService = new DiggerGameService(DiggerGameService.mapWithPlayerTerrain);
-        private GameService gameService = new SnakeGame2.SnakeGameService(10, 10);
+        private GameService gameService = new SnakeGame2.SnakeGameService();
         //private GameService gameService = new SnakeGameService(SnakeGameService.TestMap);
 
         private readonly HashSet<Keys> pressedKeys = new HashSet<Keys>();

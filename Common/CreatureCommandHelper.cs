@@ -1,4 +1,5 @@
 ﻿using GameCore;
+using System;
 using System.Collections.Generic;
 
 namespace Common
@@ -108,6 +109,19 @@ namespace Common
                 return point;
             }
             return point;
+        }
+
+        public static void ForEach<T>(this T[,] map, Action<Point, T> action)
+        {
+            var w = map.GetLength(0);
+            var h = map.GetLength(1);
+            for (int i = 0; i < w; i++)
+            {
+                for (int j = 0; j < h; j++)
+                {
+                    action(new Point(i, j), map[i,j]);
+                }
+            }
         }
 
         public static CreatureCommand ToCreatureCommand(this Point point, Point target)
