@@ -55,11 +55,17 @@ namespace SnakeGame2
             var move = (PlayerCommand)Player.GetCommand(this);
             Snake.Move(move.Move, GameState); // State Points Change
 
-            // Handle Conflict
+            // ------ Handle Conflict --------
+            // Eat apple
             if (ApplesManager.apples.Contains(Snake.Head)) // State Points Check
             {
-                ApplesManager.AppleDead(Snake.Head); // State Points Change
-                Snake.AddTail(); // State Points Change
+                ApplesManager.AppleDead(Snake.Head); // Delete Points
+                Snake.AddTail(); // Create Points
+            }
+            // Cut own tail
+            if (Snake.Body.Contains(Snake.Head)) // State Points Check
+            {
+                Snake.CutTail(Snake.Head); // Delete Points
             }
 
             // Print to map
@@ -104,14 +110,11 @@ namespace SnakeGame2
         public Point Head;
         public List<Point> Body = new();
         public Point PrevLastTailPosition;
-        public Point PrevHead;
+        public Point PrevHead => Body.First();
 
         public Snake(Point head, params Point[] body)
         {
             Head = head;
-
-            if (body.Length != 0)
-                PrevHead = body[0];
 
             foreach (var item in body)
             {
@@ -122,6 +125,14 @@ namespace SnakeGame2
         public void AddTail()
         {
             Body.Add(PrevLastTailPosition);
+        }
+
+        public void CutTail(Point fromThis)
+        {
+            var index = Body.IndexOf(fromThis);
+            if (index == -1) return;
+
+            Body.RemoveRange(index, Body.Count - index);
         }
 
         private FourDirMove PrevMove = FourDirMove.Right;
@@ -149,7 +160,6 @@ namespace SnakeGame2
                 next = temp;
             }
 
-            PrevHead = Head;
             Head = target;
             PrevMove = move;
         }
