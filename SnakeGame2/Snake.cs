@@ -10,12 +10,11 @@ namespace SnakeGame2
 {
     public class SnakeGameService : GameService, IGameStateForPlayer
     {
-        public SnakeSpawner SnakeSpawner;
-        public Snake Snake;
         public ApplesManager ApplesManager;
         public NotWalkableManager WallManager;
 
-        IPlayer Player;
+        List<SnakeSpawner> SnakeSpawners = new();
+
         List<ITransformAble> transforms = new();
         List<IMapAble> mapAble = new();
 
@@ -30,19 +29,27 @@ namespace SnakeGame2
         }
 
         public const string TestMap = @"
-WWWWWW WWWWWW
-W           W
-W           W
-S           W
-W           W
-W           W
-      W      
-W           W
-W           W
-W           W
-W           W
-W           W
-WWWWWW WWWWWW
+WWWWW WWWWWWWWWW WWWWW
+W         WW         W
+S         WW         S
+W         WW         W
+W                    W
+     W          W     
+W                    W
+W         WW         W
+W         WW         W
+W         WW         W
+WWW     WWWWWW     WWW
+W         WW         W
+W         WW         W
+W         WW         W
+W                    W
+     W          W     
+W                    W
+W         WW         W
+S         WW         S
+W         WW         W
+WWWWW WWWWWWWWWW WWWWW
 ";
 
         public SnakeGameService(string mapString = TestMap) : base(mapString, typeof(Snake))
@@ -53,7 +60,7 @@ WWWWWW WWWWWW
 
             WallManager = new NotWalkableManager(GameState.Map.GetAllLocations<Wall>(), spawnPoints);
 
-            SnakeSpawner = new SnakeSpawner(spawnPoints[0]);
+            SnakeSpawners = spawnPoints.Select(v => new SnakeSpawner(v)).ToList();
             Init();
         }
 
@@ -65,19 +72,22 @@ WWWWWW WWWWWW
 
         public override bool AddPlayer(IPlayer player)
         {
-            Player = player;
-            SnakeSpawn();
+            var freeSpawner = SnakeSpawners.FirstOrDefault(v => v.IsActive == false);
+
+            if (freeSpawner == null) return false;
+            freeSpawner.Player = player;
+            SnakeSpawn(freeSpawner);
+
             return true;
         }
 
-        private void SnakeSpawn()
+        private void SnakeSpawn(SnakeSpawner snakeSpawner)
         {
-            if (SnakeSpawner.Spawn(this, IsFreePoint) == false) 
+            if (snakeSpawner.Spawn(this, IsFreePoint) == false) 
                 return;
             
-            Snake = SnakeSpawner.SpawnedSnake;
-            if(mapAble.Contains(Snake) == false)
-                mapAble.Add(Snake);
+            if(mapAble.Contains(snakeSpawner.SpawnedSnake) == false)
+                mapAble.Add(snakeSpawner.SpawnedSnake);
 
             bool IsFreePoint(Point point)
             {
@@ -85,9 +95,9 @@ WWWWWW WWWWWW
             }
         }
 
-        private FourDirMove GetSnakeMove()
+        private FourDirMove GetSnakeMove(IPlayer player)
         {
-            var playerCommand = (PlayerCommand)Player.GetCommand(this);
+            var playerCommand = (PlayerCommand)player.GetCommand(this);
             var move = FourDirMove.None;
 
             if (playerCommand != null)
@@ -112,36 +122,44 @@ WWWWWW WWWWWW
         {
             ClearMap();
 
-            // ACT
-            if (Snake.IsDead == false)
+            foreach (var snakeSpawner in SnakeSpawners.Where(v => v.IsActive))
             {
-                var move = GetSnakeMove();
-                Snake.Move(move, GameState);// State Points Change
-            }
+                var snake = snakeSpawner.SpawnedSnake;
 
-            // ------ Handle Conflict --------
+                // ACT
+                if (snake.IsDead == false)
+                {
+                    var move = GetSnakeMove(snakeSpawner.Player);
+                    snake.Move(move, GameState);// State Points Change
+                }
 
-            if (Snake.IsDead || SnakeSpawner.InProgress)
-                SnakeSpawn();
+                // ------ Handle Conflict --------
+                if (snake.IsDead || snakeSpawner.InProgress)
+                    SnakeSpawn(snakeSpawner);
 
-            // Eat apple
-            if (ApplesManager.apples.Contains(Snake.Head)) // State Points Check
-            {
-                ApplesManager.AppleDead(Snake.Head); // Delete Points
-                Snake.AddTail(); // Create Points
-            }
-            // Cut own tail
-            if (Snake.Body.Contains(Snake.Head)) // State Points Check
-            {
-                Snake.CutTail(Snake.Head); // Delete Points
+                // Eat apple
+                if (ApplesManager.apples.Contains(snake.Head)) // State Points Check
+                {
+                    ApplesManager.AppleDead(snake.Head); // Delete Points
+                    snake.AddTail(); // Create Points
+                }
+                // Cut own tail
+                if (snake.Body.Contains(snake.Head)) // State Points Check
+                {
+                    snake.CutTail(snake.Head); // Delete Points
+                }
             }
 
             PrintToMap();
 
-            // Wall Check
-            if (WallManager.IsWalkable(Snake.Head) == false)// State Points Check
+            foreach (var snakeSpawner in SnakeSpawners.Where(v => v.IsActive))
             {
-                Snake.Dead();
+                var snake = snakeSpawner.SpawnedSnake;
+                // Wall Check
+                if (WallManager.IsWalkable(snake.Head) == false)// State Points Check
+                {
+                    snake.Dead();
+                }
             }
         }
 
@@ -185,6 +203,9 @@ WWWWWW WWWWWW
 
     public class SnakeSpawner
     {
+        public bool IsActive => Player != null;
+        public IPlayer Player;
+
         public Point Point;
         public Snake SpawnedSnake;
         public bool InProgress;
