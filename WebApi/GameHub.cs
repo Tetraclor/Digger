@@ -1,9 +1,8 @@
 ﻿using Common;
 using GameCore;
-using GameSnake;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
-using System;
+using SnakeGame2;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -23,8 +22,20 @@ namespace WebApi
         static IPlayer snakeBot = new SnakeBot();
 
         //static GameService gameService = new SnakeGameService(SnakeGameService.TestMap);
-        static GameService gameService = new SnakeGame2.SnakeGameService();
+        static GameService gameService;
         //static GameService gameService = new DiggerGameService(DiggerGameService.mapWithPlayerTerrain);
+
+        static AnimationInfo animationInfo = new()
+        {
+            MapCharToSprite = new()
+            {
+                ['H'] = "/Images/HeadSnake.png",
+                ['B'] = "/Images/BodySnake.png",
+                ['A'] = "/Images/Apple.png",
+                ['W'] = "/Images/Terrain.png",
+                ['S'] = "/Images/Spawn.png",
+            }
+        };
 
         IHubContext<GameHub> hubContext { get; }
 
@@ -51,7 +62,8 @@ namespace WebApi
         {
             if (IsFirstStart)
             {
-                timer.Stop();
+                StopGame();
+
                 timer = new System.Timers.Timer();
 
                 timer.Elapsed += (o, e) => GameTick();
@@ -63,24 +75,63 @@ namespace WebApi
 
             IsFirstStart = false;
 
+            if (RemotePlayers.ContainsKey(this.Context.ConnectionId))
+                return;
+
             var remotePlayer = new RemotePlayer();
-            gameService.AddPlayer(remotePlayer);
             RemotePlayers[this.Context.ConnectionId] = remotePlayer;
+            gameService.AddPlayer(remotePlayer);
+        }
+
+        public override Task OnDisconnectedAsync(System.Exception exception)
+        {
+            var player = RemotePlayers[this.Context.ConnectionId];
+
+            gameService.RemovePlayer(player);
+
+            return base.OnDisconnectedAsync(exception);
         }
 
         void GameTick()
         {
             gameService.MakeGameTick();
-            var stringMap = gameService.GameState.Map.MapToString();
+
+            var stringMap = gameService.ToStringMap();
+
             hubContext.Clients.All.SendAsync("Receive", stringMap, gameService.CurrentTick);
         }
+
 
         public void StopGame()
         {
             timer.Stop();
             IsFirstStart = true;
             RemotePlayers.Clear();
-            gameService = new SnakeGame2.SnakeGameService();
+
+            gameService = new AnimateSnakeGameService
+            (
+                GetThisUserSnake, 
+                animationInfo, 
+                SnakeGame2.SnakeGameService.TestMap
+            );
+
+            Snake GetThisUserSnake(SnakeGameService gameService)
+            {
+                return gameService
+                    .SnakeSpawners
+                    .FirstOrDefault() // TODO
+                    .SpawnedSnake;
+            }
         }
+
+        public AnimationInfo GetAnimateInfo()
+        {
+            return animationInfo;
+        }
+    }
+
+    public class AnimationInfo
+    {
+        public Dictionary<char, string> MapCharToSprite { get; set; } = new();
     }
 }

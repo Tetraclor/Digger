@@ -10,6 +10,8 @@ namespace SnakeGame2
 { 
     public class Snake : IMapAble
     {
+        public List<Point> AllPoints => new List<Point> { Head }.Concat(Body).ToList();
+
         public Point Head;
         public List<Point> Body = new();
         public Point PrevLastTailPosition;
@@ -42,7 +44,6 @@ namespace SnakeGame2
         public void Dead()
         {
             IsDead = true;
-            Head = new Point(-1, -1);
             Body.Clear();
         }
 

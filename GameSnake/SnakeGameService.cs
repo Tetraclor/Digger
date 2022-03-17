@@ -125,7 +125,10 @@ namespace GameSnake
             }
         }
 
-
+        public override bool RemovePlayer(IPlayer player)
+        {
+            throw new NotImplementedException();
+        }
 
         public const string TestMap = @"
 WWWWW WWWWWWWWWW WWWWW

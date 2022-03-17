@@ -21,6 +21,13 @@ namespace SnakeGame2
             Point = point;
         }
 
+        public void Deactivate()
+        {
+            Player = null;
+            SpawnedSnake.Dead();
+            SpawnedSnake = null;
+        }
+
         public bool Spawn(SnakeGameService gameState, Func<Point, bool> IsFreePoint)
         {
             if (SpawnedSnake != null && SpawnedSnake.IsDead) // if very fast dead 

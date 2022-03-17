@@ -72,7 +72,6 @@
 
             var temp = window.user_command;
             window.user_command = null;
-            console.log(temp);
             return temp;
         }
 
@@ -80,12 +79,20 @@
             .withUrl("/hub")
             .build();
 
-        hubConnection.on("Receive", function (data, tick) {
+        hubConnection.on("Receive", async function (data, tick) {
             document.getElementById("tick").innerText = tick;
             var command = bot_act();
             hubConnection.invoke("SendTurn", command);
-            draw_board(data);
+            await draw_board(data);
         });
+
+        hubConnection.on("GetAnimateInfo", function (animateInfo) {
+            //var animateInfo = hubConnection.invoke("GetAnimateInfo");
+           
+            window.animateInfo = animateInfo;
+        });
+
+        hubConnection.start();
 
         function start_game() {
             //doimport();
@@ -96,18 +103,14 @@
             hubConnection.invoke("StopGame");
         }
 
-        var canvas = document.getElementById('canvas');
-        var ctx = canvas.getContext('2d');
-        var images = get_images();
+       // var images = get_images();
 
-        function get_images() {
-            var paths = {
-                "H": "/Images/HeadSnake.png",
-                "B": "/Images/BodySnake.png",
-                "A": "/Images/Apple.png",
-                "W": "/Images/Terrain.png",
-                "S": "/Images/Spawn.png",
-            };
+        async function get_images() {
+
+            var animateInfo = await hubConnection.invoke("GetAnimateInfo");
+            console.log(animateInfo);
+
+            var paths = animateInfo.mapCharToSprite;
 
             var images = {};
 
@@ -118,10 +121,20 @@
 
             return images;
         }
-		
 
-        function draw_board(data) {
+        var canvas = document.getElementById('canvas');
+        var ctx = canvas.getContext('2d');
+
+        async function draw_board(data) {
+
             // use the intrinsic size of image in CSS pixels for the canvas element
+
+            if (window.images === undefined) {
+                window.images = await get_images();
+            }
+
+            var images = window.images;
+
             var size = 32;
 
             var rows = data.split('\n');
@@ -144,7 +157,7 @@
             
         }
 
-        hubConnection.start();
+
 
     </script>
 </body>

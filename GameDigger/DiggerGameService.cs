@@ -26,6 +26,11 @@ namespace GameDigger
             return playerCommand;
         }
 
+        public override bool RemovePlayer(IPlayer player)
+        {
+            throw new NotImplementedException();
+        }
+
         public static string mapWithPlayerTerrain = @"
 TTT T
 TTD T

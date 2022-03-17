@@ -25,6 +25,7 @@ namespace WinFormsGameView
         IAnimationManager AnimationManager;
 
         private int GameTick = 300;
+        private Action<object, EventArgs> TickHandler;
 
         public GameWindow()
         {
@@ -37,27 +38,55 @@ namespace WinFormsGameView
             gameService.AddPlayer(primitiveBot);
             gameService.AddPlayer(primitiveBot);
 
-            StartWithMapAnimate();
+            SnakeMapAnimate();
+
+            InitSizeGame();
+            InitForm(gameService.GameState.MapWidth, gameService.GameState.MapHeight);
+            StartGame(TickHandler, GameTick);
         }
 
-        void StartWithSmoothAnimate()
+        void WithSmoothAnimate()
         {
             var animationLength = 16;
             AnimationManager = new SmoothAnimationManager(animationLength: animationLength, () => {
                 gameService.MakeGameTick();
                 return gameService.GetCreatureTransformations();
             });
-            InitSizeGame();
-            InitForm(gameService.GameState.MapWidth, gameService.GameState.MapHeight);
-            StartGame(LocalGameSmoothAnimateTimerTick, GameTick / animationLength);
+
+            GameTick = GameTick / animationLength;
+            TickHandler = LocalGameSmoothAnimateTimerTick;
         }
 
-        void StartWithMapAnimate()
+        void WithMapAnimate()
         {
             AnimationManager = new MapAnimationManager(() => gameService.GameState.Map);
-            InitSizeGame();
-            InitForm(gameService.GameState.MapWidth, gameService.GameState.MapHeight);
-            StartGame(LocalGameMapAnimateTimerTick, GameTick);
+            TickHandler = LocalGameMapAnimateTimerTick;
+        }
+
+        void SnakeMapAnimate()
+        {
+            AnimationManager = new SnakeAnimationManager(
+                (v) =>
+                    {
+                        v.Map = gameService.GameState.Map;
+                        var snakeGameService = (SnakeGame2.SnakeGameService)gameService;
+                        var snakes = snakeGameService.SnakeSpawners
+                            .Where(v => v.IsActive)
+                            .Select(v => v.SpawnedSnake);
+
+                        if (snakes.Any() == false) return;
+
+                        var mySnake = snakes.First();
+                        v.UserSnake = mySnake.AllPoints;
+                        
+                        if (snakes.Count() == 1) return;
+
+                        var otherSnakes = snakes.Where(v => v != mySnake).Select(v => v.AllPoints).ToList();
+                        v.OtherSnakes = otherSnakes;
+                    }
+                );
+
+            TickHandler = LocalGameMapAnimateTimerTick;
         }
 
         void InitSizeGame()

@@ -11,7 +11,7 @@ namespace SnakeGame2
         public ApplesManager ApplesManager;
         public NotWalkableManager WallManager;
 
-        List<SnakeSpawner> SnakeSpawners = new();
+        public List<SnakeSpawner> SnakeSpawners = new();
 
         List<ITransformAble> transforms = new();
         List<IMapAble> mapAble = new();
@@ -27,12 +27,12 @@ namespace SnakeGame2
         }
 
         public const string TestMap = @"
-WWWWW WWWWWWWWWW WWWWW
+WWWWWWWWWWWWWWWWWWWWWW
 W         WW         W
 S         WW         S
 W         WW         W
 W                    W
-     W          W     
+W    W          W    W
 W                    W
 W         WW         W
 W         WW         W
@@ -42,12 +42,12 @@ W         WW         W
 W         WW         W
 W         WW         W
 W                    W
-     W          W     
+W    W          W    W
 W                    W
 W         WW         W
 S         WW         S
 W         WW         W
-WWWWW WWWWWWWWWW WWWWW
+WWWWWWWWWWWWWWWWWWWWWW
 ";
 
         public SnakeGameService(string mapString = TestMap) : base(mapString, typeof(Snake))
@@ -225,6 +225,15 @@ WWWWW WWWWWWWWWW WWWWW
         public ICreature GetCreatureOrNull(Point point)
         {
             return GameState.GetCreatureOrNull(point);
+        }
+
+        public override bool RemovePlayer(IPlayer player)
+        {
+            var spawner = SnakeSpawners.FirstOrDefault(v => v.Player == player);
+            if (spawner == null) return false;
+
+            spawner.Deactivate();
+            return true;
         }
     }
 }

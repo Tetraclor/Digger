@@ -65,6 +65,8 @@ namespace Common
         }
 
         public abstract bool AddPlayer(IPlayer player);
+        public abstract bool RemovePlayer(IPlayer player);
+
         public virtual IPlayerCommand ParsePlayerCommand(string command)
         {
             var move = Enum.Parse<FourDirMove>(command, true);
