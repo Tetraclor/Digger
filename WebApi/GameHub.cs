@@ -25,17 +25,7 @@ namespace WebApi
         static GameService gameService;
         //static GameService gameService = new DiggerGameService(DiggerGameService.mapWithPlayerTerrain);
 
-        static AnimationInfo animationInfo = new()
-        {
-            MapCharToSprite = new()
-            {
-                ['H'] = "/Images/HeadSnake.png",
-                ['B'] = "/Images/BodySnake.png",
-                ['A'] = "/Images/Apple.png",
-                ['W'] = "/Images/Terrain.png",
-                ['S'] = "/Images/Spawn.png",
-            }
-        };
+
 
         IHubContext<GameHub> hubContext { get; }
 
@@ -49,7 +39,7 @@ namespace WebApi
             if (command == null)
                 return;
 
-            if (RemotePlayers.TryGetValue(this.Context.ConnectionId, out RemotePlayer remotePlayer) == false)
+            if (RemotePlayers.TryGetValue(Context.UserIdentifier, out RemotePlayer remotePlayer) == false)
                 return;
 
             var playerCommand = gameService.ParsePlayerCommand(command);
@@ -75,11 +65,11 @@ namespace WebApi
 
             IsFirstStart = false;
 
-            if (RemotePlayers.ContainsKey(this.Context.ConnectionId))
+            if (RemotePlayers.ContainsKey(Context.UserIdentifier))
                 return;
 
             var remotePlayer = new RemotePlayer();
-            RemotePlayers[this.Context.ConnectionId] = remotePlayer;
+            RemotePlayers[Context.UserIdentifier] = remotePlayer;
             gameService.AddPlayer(remotePlayer);
         }
 
@@ -90,10 +80,10 @@ namespace WebApi
 
         public override Task OnDisconnectedAsync(System.Exception exception)
         {
-            if(RemotePlayers.TryGetValue(this.Context.ConnectionId, out RemotePlayer player) == false)
+            if(RemotePlayers.TryGetValue(Context.UserIdentifier, out RemotePlayer player) == false)
                 return base.OnDisconnectedAsync(exception);
 
-            RemotePlayers.Remove(this.Context.ConnectionId);
+            RemotePlayers.Remove(Context.UserIdentifier);
             gameService.RemovePlayer(player);
 
             return base.OnDisconnectedAsync(exception);
@@ -107,19 +97,19 @@ namespace WebApi
 
             foreach (var (id, remotePlayer) in RemotePlayers) // Игроки
             {
-                connectionId = id;
+                UserId = id;
                 stringMap = gameService.ToStringMap();
                 hubContext.Clients.Client(id).SendAsync("Receive", stringMap, gameService.CurrentTick);
             }
 
             // Наблюдатели
-            connectionId = null;
+            UserId = null;
             stringMap = gameService.ToStringMap();
 
             hubContext.Clients.AllExcept(RemotePlayers.Keys).SendAsync("Receive", stringMap, gameService.CurrentTick);
         }
 
-        static string connectionId = null;
+        static string UserId = null;
 
         public void StopGame()
         {
@@ -136,10 +126,10 @@ namespace WebApi
 
             Snake GetThisUserSnake(SnakeGameService gameService)
             {
-                if (connectionId == null)
+                if (UserId == null)
                     return null;
 
-                if (RemotePlayers.TryGetValue(connectionId, out RemotePlayer remotePlayer) == false)
+                if (RemotePlayers.TryGetValue(UserId, out RemotePlayer remotePlayer) == false)
                     return null;
 
                 return gameService
@@ -148,6 +138,18 @@ namespace WebApi
                     .SpawnedSnake;
             }
         }
+
+        static AnimationInfo animationInfo = new()
+        {
+            MapCharToSprite = new()
+            {
+                ['H'] = "/Images/HeadSnake.png",
+                ['B'] = "/Images/BodySnake.png",
+                ['A'] = "/Images/Apple.png",
+                ['W'] = "/Images/Terrain.png",
+                ['S'] = "/Images/Spawn.png",
+            }
+        };
 
         public AnimationInfo GetAnimateInfo()
         {
@@ -158,5 +160,15 @@ namespace WebApi
     public class AnimationInfo
     {
         public Dictionary<char, string> MapCharToSprite { get; set; } = new();
+    }
+
+    public class CustomUserIdProvider : IUserIdProvider
+    {
+        public virtual string GetUserId(HubConnectionContext connection)
+        {
+            return connection.ConnectionId; // Для тестирования
+            // или так
+            //return connection.User?.FindFirst(ClaimTypes.Name)?.Value;
+        }
     }
 }

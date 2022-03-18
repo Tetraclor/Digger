@@ -12,23 +12,6 @@
     <Content Remove="wwwroot\Images\Snake\bodysnake-down-left.png" />
     <Content Remove="wwwroot\Images\Snake\bodysnake-down-right.png" />
     <Content Remove="wwwroot\Images\Snake\bodysnake-down-up.png" />
-    <Content Remove="wwwroot\Images\Snake\bodysnake-down.png" />
-    <Content Remove="wwwroot\Images\Snake\BodySnake-left-down.png" />
-    <Content Remove="wwwroot\Images\Snake\BodySnake-left-right.png" />
-    <Content Remove="wwwroot\Images\Snake\bodysnake-left-up.png" />
-    <Content Remove="wwwroot\Images\Snake\BodySnake-left.png" />
-    <Content Remove="wwwroot\Images\Snake\bodysnake-right-down.png" />
-    <Content Remove="wwwroot\Images\Snake\bodysnake-right-left.png" />
-    <Content Remove="wwwroot\Images\Snake\bodysnake-right-up.png" />
-    <Content Remove="wwwroot\Images\Snake\bodysnake-right.png" />
-    <Content Remove="wwwroot\Images\Snake\bodysnake-up-down.png" />
-    <Content Remove="wwwroot\Images\Snake\bodysnake-up-left.png" />
-    <Content Remove="wwwroot\Images\Snake\bodysnake-up-right.png" />
-    <Content Remove="wwwroot\Images\Snake\bodysnake-up.png" />
-    <Content Remove="wwwroot\Images\Snake\headsnake-down.png" />
-    <Content Remove="wwwroot\Images\Snake\HeadSnake-left.png" />
-    <Content Remove="wwwroot\Images\Snake\headsnake-right.png" />
-    <Content Remove="wwwroot\Images\Snake\headsnake-up.png" />
     <Content Remove="wwwroot\Images\Spawn.png" />
     <Content Remove="wwwroot\Images\Terrain.png" />
   </ItemGroup>
@@ -64,23 +47,6 @@
     <None Include="wwwroot\Images\Snake\bodysnake-down-left.png" />
     <None Include="wwwroot\Images\Snake\bodysnake-down-right.png" />
     <None Include="wwwroot\Images\Snake\bodysnake-down-up.png" />
-    <None Include="wwwroot\Images\Snake\bodysnake-down.png" />
-    <None Include="wwwroot\Images\Snake\BodySnake-left-down.png" />
-    <None Include="wwwroot\Images\Snake\BodySnake-left-right.png" />
-    <None Include="wwwroot\Images\Snake\bodysnake-left-up.png" />
-    <None Include="wwwroot\Images\Snake\BodySnake-left.png" />
-    <None Include="wwwroot\Images\Snake\bodysnake-right-down.png" />
-    <None Include="wwwroot\Images\Snake\bodysnake-right-left.png" />
-    <None Include="wwwroot\Images\Snake\bodysnake-right-up.png" />
-    <None Include="wwwroot\Images\Snake\bodysnake-right.png" />
-    <None Include="wwwroot\Images\Snake\bodysnake-up-down.png" />
-    <None Include="wwwroot\Images\Snake\bodysnake-up-left.png" />
-    <None Include="wwwroot\Images\Snake\bodysnake-up-right.png" />
-    <None Include="wwwroot\Images\Snake\bodysnake-up.png" />
-    <None Include="wwwroot\Images\Snake\headsnake-down.png" />
-    <None Include="wwwroot\Images\Snake\HeadSnake-left.png" />
-    <None Include="wwwroot\Images\Snake\headsnake-right.png" />
-    <None Include="wwwroot\Images\Snake\headsnake-up.png" />
     <None Include="wwwroot\Images\Spawn.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
