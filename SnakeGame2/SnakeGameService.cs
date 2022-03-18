@@ -19,6 +19,9 @@ namespace SnakeGame2
         public int MapWidth => GameState.MapWidth;
         public int MapHeight => GameState.MapHeight;
 
+        public int EatAppleScore = 10;
+        public int DeathScore = -10;
+
         public SnakeGameService(int width, int height) : base(width, height, typeof(Snake))
         {
             ApplesManager = new ApplesManager(GameState, 10);
@@ -93,6 +96,8 @@ WWWWW WWWWWWWWWW WWWWW
 
         public override bool AddPlayer(IPlayer player)
         {
+            base.AddPlayer(player);
+
             var freeSpawner = SnakeSpawners.FirstOrDefault(v => v.IsActive == false);
 
             if (freeSpawner == null) return false;
@@ -141,6 +146,7 @@ WWWWW WWWWWWWWWW WWWWW
 
         public override void MakeGameTick()
         {
+            CurrentTick++;
             ClearMap();
             PrintToMap();
 
@@ -162,6 +168,7 @@ WWWWW WWWWWWWWWW WWWWW
                 // Eat apple
                 if (ApplesManager.apples.Contains(snake.Head)) // State Points Check
                 {
+                    PlayersScores[snakeSpawner.Player] += EatAppleScore; // Score count
                     ApplesManager.AppleDead(snake.Head); // Delete Points
                     snake.AddTail(); // Create Points
                 }

@@ -3,6 +3,7 @@ using GameCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using SnakeGame2;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -24,8 +25,6 @@ namespace WebApi
         //static GameService gameService = new SnakeGameService(SnakeGameService.TestMap);
         static GameService gameService;
         //static GameService gameService = new DiggerGameService(DiggerGameService.mapWithPlayerTerrain);
-
-
 
         IHubContext<GameHub> hubContext { get; }
 
@@ -53,6 +52,8 @@ namespace WebApi
             if (IsFirstStart)
             {
                 StopGame();
+
+                gameService.AddPlayer(snakeBot);
 
                 timer = new System.Timers.Timer();
 
@@ -89,24 +90,51 @@ namespace WebApi
             return base.OnDisconnectedAsync(exception);
         }
 
+        class PlayerInfo
+        {
+            public string Name { get; set; }
+            public int Score { get; set; }
+
+            public PlayerInfo()
+            {
+            }
+
+            public PlayerInfo(string name, int score)
+            {
+                Name = name;
+                Score = score;
+            }
+
+            public static explicit operator PlayerInfo((string, int) b) => new (b.Item1, b.Item2);
+        }
+
         void GameTick()
         {
             gameService.MakeGameTick();
 
             var stringMap = "";
 
+            Func<IPlayer, string> getUserNameFromPlayer = (player) =>
+            {
+                return RemotePlayers.FirstOrDefault(v => v.Value == player).Key;
+            };
+           
+            var playersScores = gameService.PlayersScores
+                .Select(v => new PlayerInfo(getUserNameFromPlayer(v.Key), v.Value))
+                .ToList();
+
             foreach (var (id, remotePlayer) in RemotePlayers) // Игроки
             {
                 UserId = id;
                 stringMap = gameService.ToStringMap();
-                hubContext.Clients.Client(id).SendAsync("Receive", stringMap, gameService.CurrentTick);
+                hubContext.Clients.Client(id).SendAsync("Receive", stringMap, gameService.CurrentTick, playersScores);
             }
 
             // Наблюдатели
             UserId = null;
             stringMap = gameService.ToStringMap();
 
-            hubContext.Clients.AllExcept(RemotePlayers.Keys).SendAsync("Receive", stringMap, gameService.CurrentTick);
+            hubContext.Clients.AllExcept(RemotePlayers.Keys).SendAsync("Receive", stringMap, gameService.CurrentTick, playersScores);
         }
 
         static string UserId = null;

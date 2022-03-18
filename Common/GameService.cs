@@ -7,13 +7,10 @@ namespace Common
 {
     public abstract class GameService
     {
-        public List<IPlayer> Players = new List<IPlayer>();
-        public Dictionary<IPlayer, IPlayerCommand> PlayersCommands = new Dictionary<IPlayer, IPlayerCommand>();
-        public Dictionary<ICreature, IPlayer> PlayersCreatures = new Dictionary<ICreature, IPlayer>();
-
         public Game Game;
         public GameState GameState;
-        public int CurrentTick { get; private set; }
+        public int CurrentTick { get; protected set; }
+        public Dictionary<IPlayer, int> PlayersScores { get; protected set; } = new ();
 
         public GameService(int width, int height, Type gameType)
         {
@@ -38,15 +35,6 @@ namespace Common
             Game = new Game(GameState);
         }
 
-        public IPlayerCommand GetPlayerCommandOrNull(ICreature creature)
-        {
-            if (PlayersCreatures.TryGetValue(creature, out IPlayer player) == false)
-                return null;
-            if (PlayersCommands.TryGetValue(player, out IPlayerCommand command) == false)
-                return null;
-            return command;
-        }
-
         public virtual void MakeGameTick()
         {
             Game.BeginAct();
@@ -64,8 +52,9 @@ namespace Common
             return Game.Transformations;
         }
 
-        public abstract bool AddPlayer(IPlayer player);
+        public virtual bool AddPlayer(IPlayer player) => PlayersScores.TryAdd(player, 0);
         public abstract bool RemovePlayer(IPlayer player);
+        public virtual int GetScore(IPlayer player) => PlayersScores.TryGetValue(player, out int score)  ? score : 0;
 
         public virtual IPlayerCommand ParsePlayerCommand(string command)
         {

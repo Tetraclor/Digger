@@ -8,7 +8,7 @@
             height: 100vh;
             width: 100vw;
             display: flex;
-			flex-direction: column;
+			flex-direction: row;
 			
             justify-content: center;
             align-items: center;
@@ -17,23 +17,61 @@
             font-family: Consolas;
         }
 
-        #game-board {
-            background-color: #CCC;
-            width: 100vmin;
-            height: 100vmin;
-            display: grid;
-            grid-template-rows: repeat(21, 1fr);
-            grid-template-columns: repeat(21, 1fr);
+        #nav {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-item{
+            margin: 10px;
+        }
+
+        #inputForm{
+            display: flex;
+            flex-direction: column;
+        }
+
+        #canvas{
+            background-color: dimgrey;
+        }
+
+        table {
+            font-family: arial, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        td, th {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+
+        tr:nth-child(even) {
+            background-color: #dddddd;
         }
     </style>
 </head>
 <body>
     <div id="nav">
-        <div id="inputForm">
-            <input type="button" id="startBtn" value="Запустить игру" onclick="start_game()" />
-            <input type="button" id="stopBtn" value="Остановить игру" onclick="stop_game()" />
+        <div id="inputForm" class="nav-item">
+            <input type="button" id="startBtn" class="nav-item" value="Запустить игру" onclick="start_game()" />
+            <input type="button" id="stopBtn" class="nav-item" value="Остановить игру" onclick="stop_game()" />
         </div>
-        <div id="tick"></div>
+        <div class="nav-item">
+            Game Tick:<b id="tick" class="nav-item">0</b>
+        </div>
+        <div  class="nav-item">
+            <table id="players" cellspacing="10" >
+                <tr>
+                    <th>№</th>
+                    <th align="left">Player Name</th>
+                    <th align="right">Score</th>
+                </tr>
+            </table>
+        </div>
     </div>
 
     <canvas id="canvas"></canvas>
@@ -79,10 +117,11 @@
             .withUrl("/hub")
             .build();
 
-        hubConnection.on("Receive", async function (data, tick) {
+        hubConnection.on("Receive", async function (data, tick, playrs_info) {
             document.getElementById("tick").innerText = tick;
             var command = bot_act();
             hubConnection.invoke("SendTurn", command);
+            update_scores(playrs_info);
             await draw_board(data);
         });
 
@@ -101,6 +140,28 @@
 
         function stop_game() {
             hubConnection.invoke("StopGame");
+        }
+
+        function update_scores(playrs_info) {
+            playrs_info = playrs_info.sort((a, b) => b.score - a.score);
+
+            var table = document.getElementById("players");
+
+            for (var i = table.rows.length; i < playrs_info.length + 1; i++) {
+                var row = table.insertRow();
+                row.innerHTML = `<td></td>
+                    <td></td>
+                    <td align="right"></td>`;
+            }
+           
+            for (var i = 0; i < playrs_info.length; i++) {
+                var info = playrs_info[i];
+                var cells = table.rows[i+1].children;
+
+                cells[0].innerText = i+1;
+                cells[1].innerText = info.name;
+                cells[2].innerText = info.score;
+            }
         }
 
        // var images = get_images();
@@ -154,11 +215,7 @@
                     ctx.drawImage(image, x * size, y * size);
                 }
             }
-            
         }
-
-
-
     </script>
 </body>
 </html>
