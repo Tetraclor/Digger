@@ -26,7 +26,7 @@ namespace SnakeGame2
             Init();
         }
 
-        public const string TestMap = @"
+        public const string TestMapNoTorSpace = @"
 WWWWWWWWWWWWWWWWWWWWWW
 W         WW         W
 S         WW         S
@@ -48,6 +48,29 @@ W         WW         W
 S         WW         S
 W         WW         W
 WWWWWWWWWWWWWWWWWWWWWW
+";
+        public const string TestMap = @"
+WWWWW WWWWWWWWWW WWWWW
+W         WW         W
+S         WW         S
+W         WW         W
+W                    W
+     W          W     
+W                    W
+W         WW         W
+W         WW         W
+W         WW         W
+WWW     WWWWWW     WWW
+W         WW         W
+W         WW         W
+W         WW         W
+W                    W
+     W          W     
+W                    W
+W         WW         W
+S         WW         S
+W         WW         W
+WWWWW WWWWWWWWWW WWWWW
 ";
 
         public SnakeGameService(string mapString = TestMap) : base(mapString, typeof(Snake))

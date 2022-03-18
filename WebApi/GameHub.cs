@@ -18,7 +18,7 @@ namespace WebApi
 
         static Dictionary<string, RemotePlayer> RemotePlayers = new Dictionary<string, RemotePlayer>();
 
-        static IPlayer randomBot = new RandomBotPlayer(23);
+        static IPlayer randomBot = new RandomBotPlayer(23); 
         static IPlayer snakeBot = new SnakeBot();
 
         //static GameService gameService = new SnakeGameService(SnakeGameService.TestMap);
@@ -83,10 +83,17 @@ namespace WebApi
             gameService.AddPlayer(remotePlayer);
         }
 
+        public override Task OnConnectedAsync()
+        {
+            return base.OnConnectedAsync();
+        }
+
         public override Task OnDisconnectedAsync(System.Exception exception)
         {
-            var player = RemotePlayers[this.Context.ConnectionId];
+            if(RemotePlayers.TryGetValue(this.Context.ConnectionId, out RemotePlayer player) == false)
+                return base.OnDisconnectedAsync(exception);
 
+            RemotePlayers.Remove(this.Context.ConnectionId);
             gameService.RemovePlayer(player);
 
             return base.OnDisconnectedAsync(exception);

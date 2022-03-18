@@ -72,6 +72,26 @@ namespace Common
             return FourDirMove.None;
         }
 
+        public static FourDirMove ToDirWithTorSpave(this Point a, Point b, int w, int h)
+        {
+            var dx = b.X - a.X;
+            var dy = b.Y - a.Y;
+
+            if (dx == 1) return FourDirMove.Right;
+            if (dx == -1) return FourDirMove.Left;
+            if (dy == 1) return FourDirMove.Down;
+            if (dy == -1) return FourDirMove.Up;
+
+            w--; h--;
+
+            if (dx == -w) return FourDirMove.Right;
+            if (dx == w) return FourDirMove.Left;
+            if (dy == -h) return FourDirMove.Down;
+            if (dy == h) return FourDirMove.Up;
+
+            return FourDirMove.None;
+        }
+
         public static Point PointWithDir(this Point point, FourDirMove move)
         {
             switch (move)

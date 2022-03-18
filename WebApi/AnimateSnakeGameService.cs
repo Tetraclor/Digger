@@ -75,6 +75,7 @@ namespace WebApi
 
             void Draw(string name, Point point)
             {
+                if (name.Contains("None")) return;
                 var ch = spriteNameToChar[$"{name.ToLower()}.png"];
                 stringMap[point.X + point.Y * (w + 1)] = ch;
             }
@@ -91,9 +92,12 @@ namespace WebApi
                 return;
             }
 
+            var w = GameState.MapWidth;
+            var h = GameState.MapHeight;
+
             var tail = snakePoints.Last();
-            draw($"HeadSnake-{head.ToDir(snakePoints[1])}", head);
-            draw($"BodySnake-{tail.ToDir(snakePoints[^2])}", tail);
+            draw($"HeadSnake-{head.ToDirWithTorSpave(snakePoints[1], w, h)}", head);
+            draw($"BodySnake-{tail.ToDirWithTorSpave(snakePoints[^2], w, h)}", tail);
 
             for (int i = 1; i < snakePoints.Count - 1; i++)
             {
@@ -101,8 +105,8 @@ namespace WebApi
                 var bodyPoint = snakePoints[i];
                 var nextPoint = snakePoints[i + 1];
 
-                var fromDir = bodyPoint.ToDir(prevPoint);
-                var toDir = bodyPoint.ToDir(nextPoint);
+                var fromDir = bodyPoint.ToDirWithTorSpave(prevPoint, w, h);
+                var toDir = bodyPoint.ToDirWithTorSpave(nextPoint, w, h);
 
                 draw($"BodySnake-{fromDir}-{toDir}", bodyPoint);
             }
