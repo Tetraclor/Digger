@@ -9,19 +9,10 @@
     <Content Remove="wwwroot\Images\Gold.png" />
     <Content Remove="wwwroot\Images\Monster.png" />
     <Content Remove="wwwroot\Images\Sack.png" />
-    <Content Remove="wwwroot\Images\Snake\bodysnake-down-left.png" />
-    <Content Remove="wwwroot\Images\Snake\bodysnake-down-right.png" />
-    <Content Remove="wwwroot\Images\Snake\bodysnake-down-up.png" />
     <Content Remove="wwwroot\Images\Spawn.png" />
     <Content Remove="wwwroot\Images\Terrain.png" />
   </ItemGroup>
 
-  <ItemGroup>
-    <_ContentIncludedByDefault Remove="wwwroot\Images\Snake\bodysnake-down-left.png" />
-    <_ContentIncludedByDefault Remove="wwwroot\Images\Snake\bodysnake-down-right.png" />
-    <_ContentIncludedByDefault Remove="wwwroot\Images\Snake\bodysnake-down-up.png" />
-    <_ContentIncludedByDefault Remove="wwwroot\Images\Snake\bodysnake-down.png" />
-  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj" />
@@ -44,9 +35,6 @@
     <None Include="wwwroot\Images\Sack.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="wwwroot\Images\Snake\bodysnake-down-left.png" />
-    <None Include="wwwroot\Images\Snake\bodysnake-down-right.png" />
-    <None Include="wwwroot\Images\Snake\bodysnake-down-up.png" />
     <None Include="wwwroot\Images\Spawn.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
