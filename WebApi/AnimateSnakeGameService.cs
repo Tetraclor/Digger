@@ -12,18 +12,26 @@ namespace WebApi
     public class AnimateSnakeGameService : SnakeGame2.SnakeGameService
     {
         Dictionary<string, char> spriteNameToChar = new();
+        Dictionary<string, char> spriteNameToCharForUserSnake = new();
 
         public AnimateSnakeGameService(Func<SnakeGameService, Snake> getUserSnake, AnimationInfo initAnimateInfo, string mapString) : base(mapString)
         {
             spriteNameToChar = new Dictionary<string, char>();
 
-            var counter = 0;
+            var ch = 'a';
 
+            foreach (var e in new DirectoryInfo("wwwroot/Images/Snake-Green").GetFiles("*.png"))
+            {
+                var imagename = e.Name.ToLower();
+                ch = (char)(ch + 1);
+                spriteNameToChar[imagename] = ch;
+                initAnimateInfo.MapCharToSprite[ch] = $"/Images/Snake-Green/{imagename}";
+            }
             foreach (var e in new DirectoryInfo("wwwroot/Images/Snake").GetFiles("*.png"))
             {
                 var imagename = e.Name.ToLower();
-                var ch = (char)('a' + counter++);
-                spriteNameToChar[imagename] = ch;
+                ch = (char)(ch + 1);
+                spriteNameToCharForUserSnake[imagename] = ch;
                 initAnimateInfo.MapCharToSprite[ch] = $"/Images/Snake/{imagename}";
             }
             GetUserSnake = getUserSnake;
@@ -62,18 +70,20 @@ namespace WebApi
 
             var userSnake = GetUserSnake(this);
 
-            if (userSnake == null) return new string(stringMap);
-
-            DrawSnake(userSnake.AllPoints, Draw);
+            if (userSnake != null)
+            {
+                DrawSnake(userSnake.AllPoints, (n, p) => Draw(n, p, spriteNameToCharForUserSnake));
+            }
+               
 
             SnakeSpawners
                 .Where(v => v.IsActive && v.SpawnedSnake != userSnake)
                 .ToList()
-                .ForEach(v => DrawSnake(v.SpawnedSnake.AllPoints, Draw));
+                .ForEach(v => DrawSnake(v.SpawnedSnake.AllPoints, (n, p) => Draw(n, p, spriteNameToChar)));
 
             return new string(stringMap);
 
-            void Draw(string name, Point point)
+            void Draw(string name, Point point, Dictionary<string, char> spriteNameToChar)
             {
                 if (name.Contains("None")) return;
                 var ch = spriteNameToChar[$"{name.ToLower()}.png"];

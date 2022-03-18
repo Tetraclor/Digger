@@ -103,11 +103,23 @@ namespace WebApi
         {
             gameService.MakeGameTick();
 
-            var stringMap = gameService.ToStringMap();
+            var stringMap = "";
 
-            hubContext.Clients.All.SendAsync("Receive", stringMap, gameService.CurrentTick);
+            foreach (var (id, remotePlayer) in RemotePlayers) // Игроки
+            {
+                connectionId = id;
+                stringMap = gameService.ToStringMap();
+                hubContext.Clients.Client(id).SendAsync("Receive", stringMap, gameService.CurrentTick);
+            }
+
+            // Наблюдатели
+            connectionId = null;
+            stringMap = gameService.ToStringMap();
+
+            hubContext.Clients.AllExcept(RemotePlayers.Keys).SendAsync("Receive", stringMap, gameService.CurrentTick);
         }
 
+        static string connectionId = null;
 
         public void StopGame()
         {
@@ -124,9 +136,15 @@ namespace WebApi
 
             Snake GetThisUserSnake(SnakeGameService gameService)
             {
+                if (connectionId == null)
+                    return null;
+
+                if (RemotePlayers.TryGetValue(connectionId, out RemotePlayer remotePlayer) == false)
+                    return null;
+
                 return gameService
                     .SnakeSpawners
-                    .FirstOrDefault() // TODO
+                    .FirstOrDefault(v => v.Player == remotePlayer) 
                     .SpawnedSnake;
             }
         }
