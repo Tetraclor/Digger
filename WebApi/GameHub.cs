@@ -11,6 +11,54 @@ using System.Threading.Tasks;
 
 namespace WebApi
 {
+    public class MainHub : Hub
+    {
+        public static MapInfo ChoisedMap;
+
+        public static List<MapInfo> Maps = new()
+        {
+            new MapInfo() { Name = "Close Map", Map = SnakeGame2.SnakeGameService.TestMapNoTorSpace },
+            new MapInfo() { Name = "Open Map", Map = SnakeGame2.SnakeGameService.TestMap },
+        };
+
+        public class MapInfo
+        {
+            public string Name { get; set; }
+            public string Map { get; set; }
+        }
+
+        public void SetMap(string name)
+        {
+            var map = Maps.FirstOrDefault(v => v.Name == name);
+            if (map == null) return;
+            ChoisedMap = map;
+        }
+
+        public List<MapInfo> GetMaps()
+        {
+            Maps.ForEach(v => v.Map = v.Map.Replace("\r", "").Trim());
+            return Maps;
+        }
+
+
+        static AnimationInfo animationInfo = new()
+        {
+            MapCharToSprite = new()
+            {
+                ['H'] = "/Images/HeadSnake.png",
+                ['B'] = "/Images/BodySnake.png",
+                ['A'] = "/Images/Apple.png",
+                ['W'] = "/Images/Terrain.png",
+                ['S'] = "/Images/Spawn.png",
+            }
+        };
+
+        public AnimationInfo GetAnimateInfo()
+        {
+            return animationInfo;
+        }
+    }
+
     public class GameHub : Hub
     {
         int GameTickMs = 300;
@@ -113,28 +161,47 @@ namespace WebApi
             gameService.MakeGameTick();
 
             var stringMap = "";
-
-            Func<IPlayer, string> getUserNameFromPlayer = (player) =>
-            {
-                return RemotePlayers.FirstOrDefault(v => v.Value == player).Key;
-            };
-           
-            var playersScores = gameService.PlayersScores
-                .Select(v => new PlayerInfo(getUserNameFromPlayer(v.Key), v.Value))
-                .ToList();
+            var playersScores = new List<PlayerInfo>();
 
             foreach (var (id, remotePlayer) in RemotePlayers) // Игроки
             {
                 UserId = id;
+                playersScores = GetPlayerInfos();
                 stringMap = gameService.ToStringMap();
                 hubContext.Clients.Client(id).SendAsync("Receive", stringMap, gameService.CurrentTick, playersScores);
             }
+
+
+            playersScores = GetPlayerInfos();
 
             // Наблюдатели
             UserId = null;
             stringMap = gameService.ToStringMap();
 
             hubContext.Clients.AllExcept(RemotePlayers.Keys).SendAsync("Receive", stringMap, gameService.CurrentTick, playersScores);
+        }
+
+        List<PlayerInfo> GetPlayerInfos()
+        {
+            var playersScores = gameService.PlayersScores
+                .Select(v => new PlayerInfo(GetUserNameFromPlayer(v.Key), v.Value))
+                .ToList();
+
+            return playersScores;
+
+            string GetUserNameFromPlayer(IPlayer player)
+            {
+                var name = RemotePlayers.FirstOrDefault(v => v.Value == player).Key;
+                if (name == null || name == "")
+                {
+                    return $"It's SnakeBot!";
+                }
+                if (UserId == name)
+                {
+                    return $"It's You! {name}";
+                }
+                return name;
+            };
         }
 
         static string UserId = null;
@@ -148,8 +215,8 @@ namespace WebApi
             gameService = new AnimateSnakeGameService
             (
                 GetThisUserSnake, 
-                animationInfo, 
-                SnakeGame2.SnakeGameService.TestMap
+                animationInfo,
+                GetMap()
             );
 
             Snake GetThisUserSnake(SnakeGameService gameService)
@@ -165,6 +232,14 @@ namespace WebApi
                     .FirstOrDefault(v => v.Player == remotePlayer) 
                     .SpawnedSnake;
             }
+        }
+
+        private string GetMap()
+        {
+            var mapInfo = MainHub.ChoisedMap;
+            if (mapInfo == null)
+                return SnakeGame2.SnakeGameService.TestMap;
+            return mapInfo.Map;
         }
 
         static AnimationInfo animationInfo = new()

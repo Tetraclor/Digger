@@ -15,7 +15,7 @@ namespace GameCore
         private static string icreatureTypeName = typeof(ICreature).Name;
         public static Assembly assembly;
 
-        public static ICreature[,] CreateMap(string map, Assembly assembly, Func<char, string> charToClassName = null, string separator = "\r\n")
+        public static ICreature[,] CreateMap(string map, Assembly assembly, Func<char, string> charToClassName = null, string separator = "\n")
         {
             CreatureMapCreator.assembly = assembly;
             charToClassName ??= CharToClassName;
@@ -57,7 +57,8 @@ namespace GameCore
                     if (creature == null) stringBuilder.Append(' ');
                     else stringBuilder.Append(creature.ToString().Split('.').Last()[0]);
                 }
-                stringBuilder.Append('\n');
+                if(y != h - 1)
+                    stringBuilder.Append('\n');
             }
 
             return stringBuilder.ToString();

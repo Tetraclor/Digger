@@ -39,7 +39,8 @@ namespace WebApi
             app.UseEndpoints(endpoints =>
             {
                 
-                endpoints.MapHub<GameHub>("/hub");
+                endpoints.MapHub<GameHub>("/game");
+                endpoints.MapHub<MainHub>("/main");
             });
         }
     }

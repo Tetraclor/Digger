@@ -1,0 +1,171 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Game Bot Arena</title>
+    <style>
+        body {
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            background-color: beige;
+            font-family: Consolas;
+        }
+
+        #nav {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-item {
+            margin: 10px;
+        }
+
+        #inputForm {
+            display: flex;
+            flex-direction: column;
+        }
+
+        #canvas {
+            background-color: dimgrey;
+        }
+
+        table {
+            font-family: arial, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        td, th {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+
+        tr:nth-child(even) {
+            background-color: #dddddd;
+        }
+
+        #apples-count {
+            width: 50px;
+        }
+    </style>
+</head>
+<body>
+    <div id="nav">
+        <div id="inputForm" class="nav-item">
+            <input type="button" id="startBtn" class="nav-item" value="Начать игру" onclick="start_game()" />
+            <input type="button" id="stopBtn" class="nav-item" value="Остановить игру" onclick="stop_game()" />
+        </div>
+        <div class="nav-item">
+            <b>Кол-во яблок:</b>
+            <input type="number" id="apples-count" class="nav-item" value="10" />
+        </div>
+        <div class="nav-item">
+            Game Tick:<b id="tick" class="nav-item">0</b>
+        </div>
+        <div class="nav-item">
+            <table id="players" cellspacing="10">
+                <tr>
+                    <th>№</th>
+                    <th align="left">Player Name</th>
+                    <th align="right">Score</th>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <script src="js/signalr/dist/browser/signalr.min.js"></script>
+    <script src="js/draw.js"></script>
+
+    <script>
+        var bot;
+        var user_command;
+
+        document.addEventListener('keydown', function (e) {
+            if (e.keyCode == '38') {
+                window.user_command = 'up';
+            }
+            else if (e.keyCode == '40') {
+                window.user_command = 'down';
+            }
+            else if (e.keyCode == '37') {
+                window.user_command = 'left';
+            }
+            else if (e.keyCode == '39') {
+                window.user_command = 'right';
+            }
+        });
+
+        async function doimport() {
+            var moduleData = document.getElementById("bot_script");
+            console.log(moduleData);
+            var b64moduleData = "data:text/javascript;base64," + btoa(moduleData);
+            window.bot = await import(b64moduleData);
+			window.bot.tick();
+        }
+
+        function bot_act() {
+            // window.bot.tick();
+
+            var temp = window.user_command;
+            window.user_command = null;
+            return temp;
+        }
+
+        const hubConnection = new signalR.HubConnectionBuilder()
+            .withUrl("/game")
+            .build();
+
+        hubConnection.on("Receive", async function (data, tick, playrs_info) {
+            document.getElementById("tick").innerText = tick;
+            var canvas = document.getElementById('canvas');
+            var command = bot_act();
+            hubConnection.invoke("SendTurn", command);
+            update_scores(playrs_info);
+            await draw_board(canvas, data);
+        });
+
+        hubConnection.start();
+
+        function start_game() {
+            //doimport();
+            hubConnection.invoke("StartGame");
+        }
+
+        function stop_game() {
+            hubConnection.invoke("StopGame");
+        }
+
+        function update_scores(playrs_info) {
+            playrs_info = playrs_info.sort((a, b) => b.score - a.score);
+
+            var table = document.getElementById("players");
+
+            for (var i = table.rows.length; i < playrs_info.length + 1; i++) {
+                var row = table.insertRow();
+                row.innerHTML = `<td></td>
+                    <td></td>
+                    <td align="right"></td>`;
+            }
+
+            for (var i = 0; i < playrs_info.length; i++) {
+                var info = playrs_info[i];
+                var cells = table.rows[i+1].children;
+
+                cells[0].innerText = i+1;
+                cells[1].innerText = info.name;
+                cells[2].innerText = info.score;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -46,13 +46,20 @@ namespace WinFormsGameView
                 allSnakeSpriteNames.Add(imagename);
             }
 
-            if (allSnakeSpriteNames.Count > 4) // Негласное правило, означает что преобразования не нужны все уже сохранены
-                return;
+            //if (allSnakeSpriteNames.Count > 10) // Негласное правило, означает что преобразования не нужны все уже сохранены
+            //    return;
 
             foreach (var imagename in allSnakeSpriteNames)
             {
                 var bitmap = bitmaps[imagename + ".png"];
                 var tails = imagename.Split("-");
+
+                _ = tails.Max(v => v.Length);
+
+                
+                
+
+                if (tails.Length == 1) continue;
 
                 var spritename = tails[0];
                 var fromDir = tails[1];

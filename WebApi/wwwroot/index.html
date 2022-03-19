@@ -17,24 +17,24 @@
             font-family: Consolas;
         }
 
-        #nav {
+        #main{
+            display: flex;
+            flex-direction: row-reverse;
+        }
+
+        canvas{
+
+            background-color: aquamarine;
+        }
+
+        #create-game-box{
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: space-between;
+
         }
 
-        .nav-item{
-            margin: 10px;
-        }
-
-        #inputForm{
-            display: flex;
-            flex-direction: column;
-        }
-
-        #canvas{
-            background-color: dimgrey;
+        .item {
+            margin: 20px;
         }
 
         table {
@@ -55,166 +55,93 @@
     </style>
 </head>
 <body>
-    <div id="nav">
-        <div id="inputForm" class="nav-item">
-            <input type="button" id="startBtn" class="nav-item" value="Запустить игру" onclick="start_game()" />
-            <input type="button" id="stopBtn" class="nav-item" value="Остановить игру" onclick="stop_game()" />
+    <div id="main">
+        <div id="create-game-box">
+            <p class="item">Создание игры</p>
+            <div class="item">
+                <span>Выбор карты:</span>
+                <select id="map-choise" onchange="choise_map();draw_map()">
+                </select>
+
+            </div>
+            <canvas id="map-canvas"></canvas>
+            <div class="item">
+                <a href="game.html">СОЗДАТЬ ИГРУ</a>
+            </div>
         </div>
-        <div class="nav-item">
-            Game Tick:<b id="tick" class="nav-item">0</b>
-        </div>
-        <div  class="nav-item">
-            <table id="players" cellspacing="10" >
+
+        <div id="nav">
+            <table>
                 <tr>
-                    <th>№</th>
-                    <th align="left">Player Name</th>
-                    <th align="right">Score</th>
+                    <th>Игрок</th>
+                    <th>Рейтинг</th>
+                    <th>Вызов</th>
+                </tr>
+                <tr>
+                    <th></th>
+                </tr>
+            </table>
+            <table>
+                <caption>
+                    Список
+                </caption>
+                <tr>
+                    <th>Игра</th>
+                    <th>Карта</th>
+                    <th>Игроки</th>
+                    <th></th>
+                </tr>
+                <tr>
+                    <td>Snake</td>
+                    <td>Test</td>
+                    <td>1/4</td>
                 </tr>
             </table>
         </div>
+
+
     </div>
-
-    <canvas id="canvas"></canvas>
-
     <script src="js/signalr/dist/browser/signalr.min.js"></script>
-	
+    <script src="js/draw.js"></script>
     <script>
-        var bot;
-        var user_command;
-
-        document.addEventListener('keydown', function (e) {
-            if (e.keyCode == '38') {
-                window.user_command = 'up';
-            }
-            else if (e.keyCode == '40') {
-                window.user_command = 'down';
-            }
-            else if (e.keyCode == '37') {
-                window.user_command = 'left';
-            }
-            else if (e.keyCode == '39') {
-                window.user_command = 'right';
-            }
-        });
-
-        async function doimport() {
-            var moduleData = document.getElementById("bot_script");
-            console.log(moduleData);
-            var b64moduleData = "data:text/javascript;base64," + btoa(moduleData);
-            window.bot = await import(b64moduleData);
-			window.bot.tick();
-        }
-
-        function bot_act() {
-            // window.bot.tick();
-
-            var temp = window.user_command;
-            window.user_command = null;
-            return temp;
-        }
-
         const hubConnection = new signalR.HubConnectionBuilder()
-            .withUrl("/hub")
+            .withUrl("/main")
             .build();
 
-        hubConnection.on("Receive", async function (data, tick, playrs_info) {
-            document.getElementById("tick").innerText = tick;
-            var command = bot_act();
-            hubConnection.invoke("SendTurn", command);
-            update_scores(playrs_info);
-            await draw_board(data);
+        hubConnection.start().then(function () {
+            update_maps();
+            console.log("Started!");
         });
 
-        hubConnection.on("GetAnimateInfo", function (animateInfo) {
-            //var animateInfo = hubConnection.invoke("GetAnimateInfo");
-           
-            window.animateInfo = animateInfo;
-        });
+        window.onload = function () {
 
-        hubConnection.start();
+        };
 
-        function start_game() {
-            //doimport();
-            hubConnection.invoke("StartGame");
+        async function update_maps() {
+            var select = document.getElementById("map-choise");
+            document.maps = await hubConnection.invoke("GetMaps");
+            var result = document.maps;
+
+            for (var i = 0; i < result.length; i++) {
+
+                select.appendChild(new Option(result[i].name));
+            }
+
+            await draw_map()
         }
 
-        function stop_game() {
-            hubConnection.invoke("StopGame");
+        function choise_map() {
+            hubConnection.invoke("SetMap", get_choised_mapinfo().name);
         }
 
-        function update_scores(playrs_info) {
-            playrs_info = playrs_info.sort((a, b) => b.score - a.score);
-
-            var table = document.getElementById("players");
-
-            for (var i = table.rows.length; i < playrs_info.length + 1; i++) {
-                var row = table.insertRow();
-                row.innerHTML = `<td></td>
-                    <td></td>
-                    <td align="right"></td>`;
-            }
-           
-            for (var i = 0; i < playrs_info.length; i++) {
-                var info = playrs_info[i];
-                var cells = table.rows[i+1].children;
-
-                cells[0].innerText = i+1;
-                cells[1].innerText = info.name;
-                cells[2].innerText = info.score;
-            }
+        function get_choised_mapinfo() {
+            return document.maps[document.getElementById("map-choise").selectedIndex];
         }
 
-       // var images = get_images();
-
-        async function get_images() {
-
-            var animateInfo = await hubConnection.invoke("GetAnimateInfo");
-            console.log(animateInfo);
-
-            var paths = animateInfo.mapCharToSprite;
-
-            var images = {};
-
-            for (const [key, value] of Object.entries(paths)) {
-                images[key] = new Image();
-                images[key].src = value;
-            }
-
-            return images;
-        }
-
-        var canvas = document.getElementById('canvas');
-        var ctx = canvas.getContext('2d');
-
-        async function draw_board(data) {
-
-            // use the intrinsic size of image in CSS pixels for the canvas element
-
-            if (window.images === undefined) {
-                window.images = await get_images();
-            }
-
-            var images = window.images;
-
-            var size = 32;
-
-            var rows = data.split('\n');
-
-            canvas.width = rows[0].length * size;
-            canvas.height = (rows.length - 1) * size;
-
-            ctx.fillStyle = "rgb(0,0,0)";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            for (var y = 0; y < rows.length; y++) {
-                var row = rows[y];
-  
-                for (var x = 0; x < row.length; x++) {
-                    var image = images[row[x]];
-                    if (image === undefined) continue;
-                    ctx.drawImage(image, x * size, y * size);
-                }
-            }
+        async function draw_map() {
+            var stringmap = get_choised_mapinfo().map;
+            var map_canvas = document.getElementById("map-canvas");
+            await draw_board(map_canvas, stringmap);
         }
     </script>
 </body>

@@ -63,7 +63,8 @@ namespace WebApi
                     else
                         stringBuilder.Append(' ');
                 }
-                stringBuilder.Append('\n');
+                if(i != h - 1)
+                    stringBuilder.Append('\n');
             }
 
             var stringMap = stringBuilder.ToString().ToCharArray();
