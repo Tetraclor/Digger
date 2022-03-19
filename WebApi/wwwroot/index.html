@@ -108,13 +108,12 @@
             .withUrl("/main")
             .build();
 
-        hubConnection.start().then(function () {
-            update_maps();
-            console.log("Started!");
-        });
+        hubConnection.start()
+            .then(async function () {
+                await update_maps();
+            });
 
         window.onload = function () {
-
         };
 
         async function update_maps() {
@@ -127,7 +126,7 @@
                 select.appendChild(new Option(result[i].name));
             }
 
-            await draw_map()
+            await draw_map();
         }
 
         function choise_map() {
