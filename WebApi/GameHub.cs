@@ -119,8 +119,11 @@ namespace WebApi
                 return;
 
             var remotePlayer = new RemotePlayer();
+
+            if (gameService.AddPlayer(remotePlayer) == false)
+                return;
+
             RemotePlayers[Context.UserIdentifier] = remotePlayer;
-            gameService.AddPlayer(remotePlayer);
         }
 
         public override Task OnConnectedAsync()

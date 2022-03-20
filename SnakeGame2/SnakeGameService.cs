@@ -105,11 +105,11 @@ WWWWW     W     WWW
 
         public override bool AddPlayer(IPlayer player)
         {
-            base.AddPlayer(player);
-
             var freeSpawner = SnakeSpawners.FirstOrDefault(v => v.IsActive == false);
 
             if (freeSpawner == null) return false;
+
+            base.AddPlayer(player);
             freeSpawner.Player = player;
             SnakeSpawn(freeSpawner);
 
