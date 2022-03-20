@@ -21,12 +21,14 @@ namespace GameCore
             charToClassName ??= CharToClassName;
 
             var rows = map.Split(new[] { separator }, StringSplitOptions.RemoveEmptyEntries);
-            if (rows.Select(z => z.Length).Distinct().Count() != 1)
-                throw new Exception($"Wrong test map '{map}'");
-            var result = new ICreature[rows[0].Length, rows.Length];
-            for (var x = 0; x < rows[0].Length; x++)
+            var maxWidth = rows.Max(v => v.Length);
+            
+            var result = new ICreature[maxWidth, rows.Length];
+
+            for (var x = 0; x < maxWidth; x++)
                 for (var y = 0; y < rows.Length; y++)
-                    result[x, y] = CreateCreatureBySymbol(rows[y][x], charToClassName);
+                    result[x, y] = CreateCreatureBySymbol(rows[y].Length > x ? rows[y][x] : ' ', charToClassName);
+
             return result;
         }
 

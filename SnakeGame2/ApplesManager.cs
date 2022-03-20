@@ -42,7 +42,7 @@ namespace SnakeGame2
         public void CreateRandomApple()
         {
             var x = Random.Next(gameState.MapWidth - 1);
-            var y = Random.Next(gameState.MapWidth - 1);
+            var y = Random.Next(gameState.MapHeight - 1);
 
             var p = new Point(x, y);
 

@@ -22,6 +22,12 @@
             flex-direction: row-reverse;
         }
 
+        #nav{
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+        }
+
         canvas{
 
             background-color: aquamarine;
@@ -30,7 +36,6 @@
         #create-game-box{
             display: flex;
             flex-direction: column;
-
         }
 
         .item {
@@ -56,9 +61,14 @@
 </head>
 <body>
     <div id="main">
-        <div id="create-game-box">
-            <p class="item">Создание игры</p>
+        <div id="create-game-box" class="item">
+            <h2 class="item">Создание игры</h2>
             <div class="item">
+                <span>Кол-во яблок:</span>
+                <input type="number" id="apples-count" class="nav-item" value="10"/>
+            </div>
+            <div class="item">
+
                 <span>Выбор карты:</span>
                 <select id="map-choise" onchange="choise_map();draw_map()">
                 </select>
@@ -70,26 +80,30 @@
             </div>
         </div>
 
-        <div id="nav">
+        <div id="nav" class="item">
             <table>
+                <caption>
+                    Список игроков
+                </caption>
                 <tr>
                     <th>Игрок</th>
                     <th>Рейтинг</th>
                     <th>Вызов</th>
                 </tr>
                 <tr>
-                    <th></th>
+                    <td>Whoami</td>
+                    <td>1500</td>
+                    <td><a href="index.html">Вызвать</a></td>
                 </tr>
             </table>
             <table>
                 <caption>
-                    Список
+                    Список идущих игр
                 </caption>
                 <tr>
                     <th>Игра</th>
                     <th>Карта</th>
                     <th>Игроки</th>
-                    <th></th>
                 </tr>
                 <tr>
                     <td>Snake</td>
@@ -140,7 +154,7 @@
         async function draw_map() {
             var stringmap = get_choised_mapinfo().map;
             var map_canvas = document.getElementById("map-canvas");
-            await draw_board(map_canvas, stringmap);
+            await draw_board(map_canvas, stringmap, 320, 320);
         }
     </script>
 </body>

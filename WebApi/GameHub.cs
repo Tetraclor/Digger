@@ -19,6 +19,7 @@ namespace WebApi
         {
             new MapInfo() { Name = "Close Map", Map = SnakeGame2.SnakeGameService.TestMapNoTorSpace },
             new MapInfo() { Name = "Open Map", Map = SnakeGame2.SnakeGameService.TestMap },
+            new MapInfo() { Name = "T + D :)", Map = SnakeGame2.SnakeGameService.Hah },
         };
 
         public class MapInfo

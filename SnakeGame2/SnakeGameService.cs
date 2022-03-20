@@ -75,6 +75,15 @@ S         WW         S
 W         WW         W
 WWWWW WWWWWWWWWW WWWWW
 ";
+        public const string Hah = @"
+WWWWW     W     WWW    
+  W       W     W  W   
+  W       W     W   W  
+  S    WWWWWWW  S   W  
+  W       W     W   W  
+  W       W     W  W   
+  W       W     WWW
+";
 
         public SnakeGameService(string mapString = TestMap) : base(mapString, typeof(Snake))
         {

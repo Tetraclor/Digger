@@ -26,7 +26,7 @@ async function draw_board(canvas, data, maxw = 500, maxh=500) {
 
     var rows = data.split('\n');
 
-    var w = rows[0].length * size;
+    var w = Math.max(rows.map(v => v.length)) * size;
     var h = rows.length * size;
 
     var sw = maxw / w;
@@ -35,10 +35,13 @@ async function draw_board(canvas, data, maxw = 500, maxh=500) {
     canvas.width = Math.min(w, maxw);
     canvas.height = Math.min(h, maxh);
 
+    canvas.width = w;
+    canvas.height = h;
+
     ctx.fillStyle = "rgb(0,0,0)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    ctx.scale(sw, sh);
+    //ctx.scale(sw, sh);
 
     for (var y = 0; y < rows.length; y++) {
         var row = rows[y];
