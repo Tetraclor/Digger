@@ -65,7 +65,7 @@
             <h2 class="item">Создание игры</h2>
             <div class="item">
                 <span>Кол-во яблок:</span>
-                <input type="number" id="apples-count" class="nav-item" value="10" onchange="window.applesCount = parseInt(this.value)"/>
+                <input type="number" id="apples-count" class="nav-item" value="10" onchange="window.applesCount = parseInt(this.value)" />
             </div>
             <div class="item">
 
@@ -93,7 +93,17 @@
                 <tr>
                     <td>Whoami</td>
                     <td>1500</td>
-                    <td><a href="index.html">Вызвать</a></td>
+                    <td><button onclick="location.href='game.html?game=100'">Вызвать</button></td>
+                </tr>
+                <tr>
+                    <td>Anonim</td>
+                    <td>1500</td>
+                    <td><button onclick="">Вызвать</button></td>
+                </tr>
+                <tr>
+                    <td>Test</td>
+                    <td>1500</td>
+                    <td><button onclick="">Вызвать</button></td>
                 </tr>
             </table>
             <table>
@@ -117,6 +127,27 @@
     </div>
     <script src="js/signalr/dist/browser/signalr.min.js"></script>
     <script src="js/draw.js"></script>
+
+    <script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            console.log("document loaded");
+
+            hubConnection.start()
+                .then(async function () {
+                    console.log("websocket connected");
+                    await update_maps();
+                    console.log("map updated");
+                    choise_map();
+                });
+
+        });
+
+        $(window).on("load", function () {
+            console.log("window loaded");
+        });
+    </script>
+
     <script>
 
         window.applesCount = 10;
@@ -125,16 +156,20 @@
             .withUrl("/main")
             .build();
 
-        hubConnection.start()
-            .then(async function () {
-                await update_maps();
-                choise_map();
-                draw_map();
-            })
-            .then(draw_map);
 
         window.onload = function () {
         };
+
+        hubConnection.on("ReceiveMessage", (message) => {
+        });
+
+        function join(group) {
+            hubConnection.invoke("Join", group);
+        }
+
+        function send_message(message) {
+            hubConnection.invoke("SendMessage", message);
+        }
 
         async function update_maps() {
             var select = document.getElementById("map-choise");

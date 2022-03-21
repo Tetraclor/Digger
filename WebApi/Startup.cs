@@ -36,7 +36,6 @@ namespace WebApi
             app.UseRouting();
             app.UseEndpoints(v => v.MapControllers());
 
-
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapHub<GameHub>("/game");

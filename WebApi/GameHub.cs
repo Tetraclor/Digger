@@ -29,6 +29,23 @@ namespace WebApi
             public int ApplesCount { get; set; }
         }
 
+        Dictionary<string, string> connectionIdToGroup = new();
+
+        public void Join(string group)
+        {
+            Groups.AddToGroupAsync(this.Context.ConnectionId, group);
+            connectionIdToGroup[this.Context.ConnectionId] = group;
+        }
+
+        public void SendMessage(string message)
+        {
+            if (connectionIdToGroup.TryGetValue(message, out var group) == false)
+                Clients.Caller.SendAsync("Неизвестная группа");
+
+
+            Clients.Group(group).SendAsync("ReceiveMessage", message);
+        }
+
         public void SetMap(string name, int applesCount)
         {
             var map = Maps.FirstOrDefault(v => v.Name == name);

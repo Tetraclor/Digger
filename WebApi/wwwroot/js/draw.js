@@ -1,22 +1,28 @@
-﻿async function get_images() {
+﻿async function get_images(image_load_callback) {
     var animateInfo = await hubConnection.invoke("GetAnimateInfo");
 
     var paths = animateInfo.mapCharToSprite;
 
     var images = {};
 
+    var test = '';
+
     for (const [key, value] of Object.entries(paths)) {
         images[key] = new Image();
         images[key].src = value;
+        test = key;
     }
 
+    images[test].onload = image_load_callback; // draw when only last image loaded
+   
     return images;
 }
 
 async function draw_board(canvas, data, maxw = 500, maxh=500) {
 
     if (window.images === undefined) {
-        window.images = await get_images();
+        window.images = await get_images(() => draw_board(canvas, data, maxw, maxh));
+        return;
     }
 
     var images = window.images;
