@@ -26,13 +26,16 @@ namespace WebApi
         {
             public string Name { get; set; }
             public string Map { get; set; }
+            public int ApplesCount { get; set; }
         }
 
-        public void SetMap(string name)
+        public void SetMap(string name, int applesCount)
         {
             var map = Maps.FirstOrDefault(v => v.Name == name);
             if (map == null) return;
+            
             ChoisedMap = map;
+            ChoisedMap.ApplesCount = applesCount;
         }
 
         public List<MapInfo> GetMaps()
@@ -59,7 +62,7 @@ namespace WebApi
             return animationInfo;
         }
     }
-
+ 
     public class GameHub : Hub
     {
         int GameTickMs = 300;
@@ -216,12 +219,16 @@ namespace WebApi
             IsFirstStart = true;
             RemotePlayers.Clear();
 
-            gameService = new AnimateSnakeGameService
+            var snakeGame = new AnimateSnakeGameService
             (
                 GetThisUserSnake, 
                 animationInfo,
                 GetMap()
             );
+
+            snakeGame.ApplesManager.SetMaxApplesCount(MainHub.ChoisedMap.ApplesCount);
+
+            gameService = snakeGame;
 
             Snake GetThisUserSnake(SnakeGameService gameService)
             {

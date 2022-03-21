@@ -29,17 +29,12 @@ async function draw_board(canvas, data, maxw = 500, maxh=500) {
     var w = Math.max(...rows.map(v => v.length)) * size;
     var h = rows.length * size;
 
-    console.log(w, h);
-
     var sw = maxw / w;
     var sh = maxh / h;
     var scale = Math.min(sw, sh);
 
     canvas.width = w * scale;
     canvas.height = h * scale;
-
-    console.log(canvas.width, canvas.height);
-    console.log(scale, scale);
 
     ctx.fillStyle = "rgb(0,0,0)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);

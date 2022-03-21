@@ -65,7 +65,7 @@
             <h2 class="item">Создание игры</h2>
             <div class="item">
                 <span>Кол-во яблок:</span>
-                <input type="number" id="apples-count" class="nav-item" value="10"/>
+                <input type="number" id="apples-count" class="nav-item" value="10" onchange="window.applesCount = parseInt(this.value)"/>
             </div>
             <div class="item">
 
@@ -118,6 +118,9 @@
     <script src="js/signalr/dist/browser/signalr.min.js"></script>
     <script src="js/draw.js"></script>
     <script>
+
+        window.applesCount = 10;
+
         const hubConnection = new signalR.HubConnectionBuilder()
             .withUrl("/main")
             .build();
@@ -125,7 +128,10 @@
         hubConnection.start()
             .then(async function () {
                 await update_maps();
-            });
+                choise_map();
+                draw_map();
+            })
+            .then(draw_map);
 
         window.onload = function () {
         };
@@ -144,7 +150,10 @@
         }
 
         function choise_map() {
-            hubConnection.invoke("SetMap", get_choised_mapinfo().name);
+            var applesCount = window.applesCount;
+
+            console.log(applesCount);
+            hubConnection.invoke("SetMap", get_choised_mapinfo().name, applesCount);
         }
 
         function get_choised_mapinfo() {
@@ -154,6 +163,7 @@
         async function draw_map() {
             var stringmap = get_choised_mapinfo().map;
             var map_canvas = document.getElementById("map-canvas");
+            console.log(map_canvas);
             await draw_board(map_canvas, stringmap, 320, 320);
         }
     </script>

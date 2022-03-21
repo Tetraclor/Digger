@@ -32,7 +32,7 @@ namespace Common
                      point.X >= game.MapWidth ||
                      point.Y < 0 ||
                      point.Y >= game.MapHeight);
-        }
+        } 
 
 
         public static bool IsInBound(this Point point, IGameStateForPlayer game)

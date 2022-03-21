@@ -8,7 +8,7 @@ namespace SnakeGame2
     {
         private Random Random = new Random();
         private GameState gameState;
-        public int MaxApplesCount;
+        public int MaxApplesCount { get; private set; }
         public HashSet<Point> apples = new HashSet<Point>();
 
         public ApplesManager(GameState gameState, int applesCount)
@@ -32,11 +32,23 @@ namespace SnakeGame2
             }
         }
 
+        public void SetMaxApplesCount(int applesCount)
+        {
+            MaxApplesCount = applesCount;
+            apples.Clear();
+            for (int i = 0; i < applesCount; i++)
+            {
+                CreateRandomApple();
+            }
+        }
+
         public void AppleDead(Point apple)
         {
             if (apples.Contains(apple) == false) return;
             apples.Remove(apple);
-            CreateRandomApple();
+
+            if(apples.Count < MaxApplesCount)
+                CreateRandomApple();
         }
 
         public void CreateRandomApple()

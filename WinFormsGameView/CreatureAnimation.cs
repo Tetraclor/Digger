@@ -37,7 +37,7 @@ namespace WinFormsGameView
            // graphics.ScaleTransform(1/(float)SpriteSize, 1/(float)SpriteSize);
 
             var map = getMap();
-            var w = map.GetLength(0);
+            var w = map.GetLength(0); 
             var h = map.GetLength(1);
             for (int i = 0; i < h; i++)
             {

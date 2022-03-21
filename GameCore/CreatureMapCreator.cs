@@ -19,7 +19,7 @@ namespace GameCore
         {
             CreatureMapCreator.assembly = assembly;
             charToClassName ??= CharToClassName;
-
+            map = map.Replace("\r", "");
             var rows = map.Split(new[] { separator }, StringSplitOptions.RemoveEmptyEntries);
             var maxWidth = rows.Max(v => v.Length);
             
