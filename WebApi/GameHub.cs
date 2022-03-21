@@ -11,9 +11,25 @@ using System.Threading.Tasks;
 
 namespace WebApi
 {
+    public class StartGameInfo
+    {
+        public string GameId { get; set; }
+        public string MapName { get; set; }
+        public int ApplesCount { get; set; }
+        public string[] Players { get; set; }
+
+        public bool IsOver { get; private set; } = false;
+        public bool IsInProgress { get; private set; } = false;
+        public bool IsNotStarted => !IsOver && !IsInProgress;
+
+        public void MarkAsOver() { IsOver = true; IsInProgress = false; }
+        public void MarkAsInProgress() { IsInProgress = true;  }
+
+    }
+
     public class MainHub : Hub
     {
-        public static MapInfo ChoisedMap;
+        public static List<StartGameInfo> StartGameInfo { get; set; } = new();
 
         public static List<MapInfo> Maps = new()
         {
@@ -22,6 +38,7 @@ namespace WebApi
             new MapInfo() { Name = "T + D :)", Map = SnakeGame2.SnakeGameService.Hah },
         };
 
+
         public class MapInfo
         {
             public string Name { get; set; }
@@ -29,31 +46,33 @@ namespace WebApi
             public int ApplesCount { get; set; }
         }
 
-        Dictionary<string, string> connectionIdToGroup = new();
-
-        public void Join(string group)
+        public void StartGame(StartGameInfo startGameInfo)
         {
-            Groups.AddToGroupAsync(this.Context.ConnectionId, group);
-            connectionIdToGroup[this.Context.ConnectionId] = group;
+            StartGameInfo.Add(startGameInfo);
         }
 
-        public void SendMessage(string message)
-        {
-            if (connectionIdToGroup.TryGetValue(message, out var group) == false)
-                Clients.Caller.SendAsync("Неизвестная группа");
+       // public static Dictionary<string, string> ConnectionIdToGroup = new();
 
 
-            Clients.Group(group).SendAsync("ReceiveMessage", message);
-        }
+        //public void Join(string group)
+        //{
+        //    if (group == null)
+        //        return;
 
-        public void SetMap(string name, int applesCount)
-        {
-            var map = Maps.FirstOrDefault(v => v.Name == name);
-            if (map == null) return;
-            
-            ChoisedMap = map;
-            ChoisedMap.ApplesCount = applesCount;
-        }
+        //    Groups.AddToGroupAsync(this.Context.ConnectionId, group);
+        //    ConnectionIdToGroup[this.Context.ConnectionId] = group;
+        //}
+
+        //public void SendMessage(string message)
+        //{
+        //    if (ConnectionIdToGroup.TryGetValue(this.Context.ConnectionId, out var group) == false)
+        //    {
+        //        Clients.Caller.SendAsync("ReceiveMessage", "Неизвестная группа");
+        //        return;
+        //    }
+
+        //    Clients.Group(group).SendAsync("ReceiveMessage", message);
+        //}
 
         public List<MapInfo> GetMaps()
         {
@@ -61,44 +80,107 @@ namespace WebApi
             return Maps;
         }
 
-
-        static AnimationInfo animationInfo = new()
-        {
-            MapCharToSprite = new()
-            {
-                ['H'] = "/Images/HeadSnake.png",
-                ['B'] = "/Images/BodySnake.png",
-                ['A'] = "/Images/Apple.png",
-                ['W'] = "/Images/Terrain.png",
-                ['S'] = "/Images/Spawn.png",
-            }
-        };
-
         public AnimationInfo GetAnimateInfo()
         {
-            return animationInfo;
+            return new AnimationInfo();
         }
     }
  
+    public class GamesHubService 
+    {
+        static Dictionary<string, GameInfo> Games = new();
+        List<IPlayer> Players = new();
+        Dictionary<IPlayer, string> playerToGameId = new();
+
+        public class GameInfo
+        {
+            public GameService GameService { get; set; }
+            public System.Timers.Timer timer = new System.Timers.Timer();
+            public int GameTickMs = 300;
+        }
+
+        public bool AddPlayer(string gameId, IPlayer player)
+        {
+            if (Games.TryGetValue(gameId, out GameInfo game) == false)
+            {
+                return false;
+            }
+
+            Players.Add(player);
+            playerToGameId[player] = gameId;
+
+            game.GameService.AddPlayer(player);
+
+            return true;
+        }
+
+        public void RemovePlayer(IPlayer player)
+        {
+            Players.Remove(player);
+            playerToGameId.Remove(player, out string gameId);
+
+            if (Games.TryGetValue(gameId, out GameInfo game))
+            {
+                game.GameService.RemovePlayer(player);
+            }
+        }
+
+        public GameService GetGameOrNull(string gameId)
+        {
+            if(Games.TryGetValue(gameId, out GameInfo game) == false)
+            {
+                return null;
+            }
+            return game.GameService;
+        }
+
+        public void CreateGame(string gameId, GameService gameService)
+        {
+            var gameInfo = new GameInfo();
+            gameInfo.GameService = gameService;
+            Games[gameId] = gameInfo;
+        }
+
+        public void StartGame(string gameId, Action<string, GameService> GameTick)
+        {
+            if (Games.TryGetValue(gameId, out GameInfo gameInfo) == false)
+            {
+                return;
+            }
+
+            var timer = gameInfo.timer;
+            var gameService = gameInfo.GameService;
+
+            timer.Elapsed += (o, e) => GameTick(gameId, gameService);
+            timer.Interval = gameInfo.GameTickMs;
+            timer.Enabled = true;
+
+            timer.Start();
+
+            GameTick(gameId, gameService);
+        }
+
+        public void StopGame(string gameId)
+        {
+            if (Games.TryGetValue(gameId, out GameInfo game) == false)
+            {
+                return;
+            }
+            game.timer.Stop();
+            Games.Remove(gameId);
+        }
+    }
+
     public class GameHub : Hub
     {
-        int GameTickMs = 300;
-
-        static System.Timers.Timer timer = new System.Timers.Timer();
-
-        static Dictionary<string, RemotePlayer> RemotePlayers = new Dictionary<string, RemotePlayer>();
-
-        static IPlayer randomBot = new RandomBotPlayer(23); 
-        static IPlayer snakeBot = new SnakeBot();
-
-        //static GameService gameService = new SnakeGameService(SnakeGameService.TestMap);
-        static GameService gameService;
-        //static GameService gameService = new DiggerGameService(DiggerGameService.mapWithPlayerTerrain);
+        static Dictionary<string, RemotePlayer> RemotePlayers = new();
 
         IHubContext<GameHub> hubContext { get; }
+        GamesHubService GamesHubService { get; }
 
-        public GameHub(IHubContext<GameHub> hubContext)
+        public GameHub(IHubContext<GameHub> hubContext, GamesHubService gamesHub)
         {
+            this.GamesHubService = gamesHub;
             this.hubContext = hubContext;
         }
 
@@ -110,37 +192,17 @@ namespace WebApi
             if (RemotePlayers.TryGetValue(Context.UserIdentifier, out RemotePlayer remotePlayer) == false)
                 return;
 
-            var playerCommand = gameService.ParsePlayerCommand(command);
-            remotePlayer.PlayerCommand = playerCommand;  
+            remotePlayer.SetCommand(command);
         }
 
-        static bool IsFirstStart = true;
-
-        public void StartGame()
+        public void JoinGame(string gameId)
         {
-            if (IsFirstStart)
-            {
-                StopGame();
-
-                gameService.AddPlayer(snakeBot);
-
-                timer = new System.Timers.Timer();
-
-                timer.Elapsed += (o, e) => GameTick();
-                timer.Interval = GameTickMs;
-                timer.Enabled = true;
-
-                GameTick();
-            }
-
-            IsFirstStart = false;
-
-            if (RemotePlayers.ContainsKey(Context.UserIdentifier))
+            if (RemotePlayers.ContainsKey(Context.UserIdentifier)) // Пока что один игрок может участвовать только в одно игре
                 return;
 
             var remotePlayer = new RemotePlayer();
 
-            if (gameService.AddPlayer(remotePlayer) == false)
+            if (GamesHubService.AddPlayer(gameId, remotePlayer) == false)
                 return;
 
             RemotePlayers[Context.UserIdentifier] = remotePlayer;
@@ -157,7 +219,8 @@ namespace WebApi
                 return base.OnDisconnectedAsync(exception);
 
             RemotePlayers.Remove(Context.UserIdentifier);
-            gameService.RemovePlayer(player);
+
+            GamesHubService.RemovePlayer(player); 
 
             return base.OnDisconnectedAsync(exception);
         }
@@ -176,76 +239,43 @@ namespace WebApi
                 Name = name;
                 Score = score;
             }
-
-            public static explicit operator PlayerInfo((string, int) b) => new (b.Item1, b.Item2);
         }
 
-        void GameTick()
+        public void StartGame(string gameId)
         {
-            gameService.MakeGameTick();
+            var startGameInfo = MainHub.StartGameInfo.FirstOrDefault(v => v.GameId == gameId);
 
-            var stringMap = "";
-            var playersScores = new List<PlayerInfo>();
+            Groups.AddToGroupAsync(Context.ConnectionId, gameId);
 
-            foreach (var (id, remotePlayer) in RemotePlayers) // Игроки
+            if (startGameInfo == null)
             {
-                UserId = id;
-                playersScores = GetPlayerInfos();
-                stringMap = gameService.ToStringMap();
-                hubContext.Clients.Client(id).SendAsync("Receive", stringMap, gameService.CurrentTick, playersScores);
+                Clients.Caller.SendAsync("ShowMessage", $"Игры с таким id={gameId} не найдено");
+                return;
             }
 
-
-            playersScores = GetPlayerInfos();
-
-            // Наблюдатели
-            UserId = null;
-            stringMap = gameService.ToStringMap();
-
-            hubContext.Clients.AllExcept(RemotePlayers.Keys).SendAsync("Receive", stringMap, gameService.CurrentTick, playersScores);
-        }
-
-        List<PlayerInfo> GetPlayerInfos()
-        {
-            var playersScores = gameService.PlayersScores
-                .Select(v => new PlayerInfo(GetUserNameFromPlayer(v.Key), v.Value))
-                .ToList();
-
-            return playersScores;
-
-            string GetUserNameFromPlayer(IPlayer player)
+            if (startGameInfo.IsNotStarted)
             {
-                var name = RemotePlayers.FirstOrDefault(v => v.Value == player).Key;
-                if (name == null || name == "")
+                startGameInfo.MarkAsInProgress();
+
+                var snakeGame = new AnimateSnakeGameService
+                (
+                    GetThisUserSnake,
+                    animationInfo,
+                    GetMap()
+                );
+
+                snakeGame.ApplesManager.SetMaxApplesCount(startGameInfo.ApplesCount);
+
+                GamesHubService.CreateGame(gameId, snakeGame);
+
+                foreach (var playerName in startGameInfo.Players)
                 {
-                    return $"It's SnakeBot!";
+                    var player = GetPlayer(playerName);
+                    GamesHubService.AddPlayer(gameId, player);
                 }
-                if (UserId == name)
-                {
-                    return $"It's You! {name}";
-                }
-                return name;
-            };
-        }
 
-        static string UserId = null;
-
-        public void StopGame()
-        {
-            timer.Stop();
-            IsFirstStart = true;
-            RemotePlayers.Clear();
-
-            var snakeGame = new AnimateSnakeGameService
-            (
-                GetThisUserSnake, 
-                animationInfo,
-                GetMap()
-            );
-
-            snakeGame.ApplesManager.SetMaxApplesCount(MainHub.ChoisedMap.ApplesCount);
-
-            gameService = snakeGame;
+                GamesHubService.StartGame(gameId, GameTick);
+            }
 
             Snake GetThisUserSnake(SnakeGameService gameService)
             {
@@ -257,30 +287,97 @@ namespace WebApi
 
                 return gameService
                     .SnakeSpawners
-                    .FirstOrDefault(v => v.Player == remotePlayer) 
+                    .FirstOrDefault(v => v.Player == remotePlayer)
                     .SpawnedSnake;
             }
-        }
 
-        private string GetMap()
-        {
-            var mapInfo = MainHub.ChoisedMap;
-            if (mapInfo == null)
-                return SnakeGame2.SnakeGameService.TestMap;
-            return mapInfo.Map;
-        }
-
-        static AnimationInfo animationInfo = new()
-        {
-            MapCharToSprite = new()
+            string GetMap()
             {
-                ['H'] = "/Images/HeadSnake.png",
-                ['B'] = "/Images/BodySnake.png",
-                ['A'] = "/Images/Apple.png",
-                ['W'] = "/Images/Terrain.png",
-                ['S'] = "/Images/Spawn.png",
+                var mapInfo = MainHub.Maps
+                    .FirstOrDefault(v => v.Name == startGameInfo.MapName);
+                if (mapInfo == null)
+                    return SnakeGame2.SnakeGameService.TestMap;
+                return mapInfo.Map;
             }
-        };
+
+            IPlayer GetPlayer(string playerName)
+            {
+                IPlayer player;
+
+                if (playerName == "SimpleBot") // Боты заглушки
+                    player = new SnakeBot();
+                else if (playerName == "RandomBot")
+                    player = new RandomBotPlayer(7);
+                else
+                {
+                    player = new RemotePlayer();
+                    RemotePlayers[playerName] = (RemotePlayer)player;
+                }
+
+                return player;
+            }
+        }
+
+        public void StopGame(string gameId)
+        {
+            GamesHubService.StopGame(gameId);
+            var startGameInfo = MainHub.StartGameInfo.FirstOrDefault(v => v.GameId == gameId);
+
+            if (startGameInfo != null)
+            {
+                startGameInfo.MarkAsOver();
+            }
+        }
+
+        private void GameTick(string gameId, GameService gameService)
+        {
+            string stringMap;
+            List<PlayerInfo> playersScores;
+
+            foreach (var (id, remotePlayer) in RemotePlayers) // Игроки
+            {
+                UserId = id;
+                playersScores = GetPlayerInfos();
+                stringMap = gameService.ToStringMap();// Перерисовка для участников  ПЕРЕДЕЛАТЬ!
+                hubContext.Clients.Client(id).SendAsync("Receive", stringMap, gameService.CurrentTick, playersScores);
+            }
+
+            playersScores = GetPlayerInfos();
+
+            // Наблюдатели
+            UserId = null;
+            stringMap = gameService.ToStringMap();
+            hubContext.Clients.GroupExcept(gameId, RemotePlayers.Keys).SendAsync("Receive", stringMap, gameService.CurrentTick, playersScores);
+
+            gameService.MakeGameTick();
+
+            List<PlayerInfo> GetPlayerInfos()
+            {
+                var playersScores = gameService.PlayersScores
+                    .Select(v => new PlayerInfo(GetUserNameFromPlayer(v.Key), v.Value))
+                    .ToList();
+
+                return playersScores;
+
+                string GetUserNameFromPlayer(IPlayer player)
+                {
+                    var name = RemotePlayers.FirstOrDefault(v => v.Value == player).Key;
+                    if (name == null || name == "")
+                    {
+                        return $"It's SnakeBot!";
+                    }
+                    if (UserId == name)
+                    {
+                        return $"It's You! {name}";
+                    }
+                    return name;
+                };
+            }
+        }
+
+        static string UserId = null;
+
+        static AnimationInfo animationInfo = new();
 
         public AnimationInfo GetAnimateInfo()
         {
@@ -290,7 +387,14 @@ namespace WebApi
 
     public class AnimationInfo
     {
-        public Dictionary<char, string> MapCharToSprite { get; set; } = new();
+        public Dictionary<char, string> MapCharToSprite { get; set; } = new()
+        {
+            ['H'] = "/Images/HeadSnake.png",
+            ['B'] = "/Images/BodySnake.png",
+            ['A'] = "/Images/Apple.png",
+            ['W'] = "/Images/Terrain.png",
+            ['S'] = "/Images/Spawn.png",
+        };
     }
 
     public class CustomUserIdProvider : IUserIdProvider

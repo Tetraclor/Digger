@@ -20,6 +20,7 @@ namespace WebApi
             services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
             services.AddControllers();
             services.AddSignalR();
+            services.AddSingleton<GamesHubService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

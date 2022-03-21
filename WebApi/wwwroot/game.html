@@ -137,12 +137,11 @@
         hubConnection.start();
 
         function start_game() {
-            //doimport();
-            hubConnection.invoke("StartGame");
+            hubConnection.invoke("StartGame", params.game_id);
         }
 
         function stop_game() {
-            hubConnection.invoke("StopGame");
+            hubConnection.invoke("StopGame", params.game_id);
         }
 
         function update_scores(playrs_info) {
@@ -171,7 +170,7 @@
             get: (searchParams, prop) => searchParams.get(prop),
         });
         // Get the value of "some_key" in eg "https://example.com/?some_key=some_value"
-        console.log(params.game);
+        console.log(params.game_id);
     </script>
 </body>
 </html>
