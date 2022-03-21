@@ -88,7 +88,7 @@
         </div>
 
         <div id="nav" class="item">
-            <table>
+            <table id="players">
                 <caption>
                     Список игроков
                 </caption>
@@ -97,18 +97,8 @@
                     <th>Рейтинг</th>
                     <th>Вызов</th>
                 </tr>
-                <tr>
-                    <td>RandomBot</td>
-                    <td>1500</td>
-                    <td><button onclick="join_game(this)">Вызвать</button></td>
-                </tr>
-                <tr>
-                    <td>SimpleBot</td>
-                    <td>1500</td>
-                    <td><button onclick="join_game(this)">Вызвать</button></td>
-                </tr>
             </table>
-            <table>
+            <table id="games">
                 <caption>
                     Список идущих игр
                 </caption>
@@ -116,11 +106,7 @@
                     <th>Игра</th>
                     <th>Карта</th>
                     <th>Игроки</th>
-                </tr>
-                <tr>
-                    <td>Snake</td>
-                    <td>Test</td>
-                    <td>1/4</td>
+                    <th>Cмотреть</th>
                 </tr>
             </table>
            <div id="message-box">
@@ -142,17 +128,28 @@
                     console.log("websocket connected");
                     await update_maps();
                     console.log("map updated");
+                    await update_games();
+                    console.log("games updated");
+                    await update_players();
                 });
         });
 
         window.members = [];
 
-        function join_game(cell) {
+        function onclick_join_game(cell) {
             var r = cell.parentElement.parentElement.cells;
             var table = $('#members')[0];
             var row = table.insertRow();
             var player = r[0].innerText;
             var rate = r[1].innerText;
+            var index = members.push({ name: player, row: row, index: members.length }) - 1;
+            row.innerHTML = (`<td>${player}</td>
+                        <td>${rate}</td>
+                        <td><button onclick="exclude_game(${index})">Исключить</button></td>`);
+        }
+
+        function join_game() {
+
             var index = members.push({ name: player, row: row, index: members.length }) - 1;
             row.innerHTML = (`<td>${player}</td>
                         <td>${rate}</td>
@@ -185,7 +182,8 @@
                 players: players
 
             }).then(() => {
-                location.href = `game.html?game_id=${gameId}`;
+                window.open(`game.html?game_id=${gameId}`);
+                //location.href = `game.html?game_id=${gameId}`;
             });
         }
 
@@ -198,6 +196,37 @@
         hubConnection.on("ShowMessage", (msg) => {
             console.log(`Сообщение с сервера: ${msg}`);
         });
+
+        async function update_games() {
+            var games = await hubConnection.invoke("GetGames");
+            var table = $('#games')[0];
+            for (var i = 0; i < games.length; i++) {
+                var row = table.insertRow();
+                var info = games[i];
+                row.innerHTML = `<td>Snake</td >
+                        <td>${info.mapName}</td>
+                        <td>${info.players}</td>
+                        <td><a href="game.html?game_id=${info.gameId}">Смотреть</a></td>`;
+            }
+
+            console.log(games);
+        }
+
+        async function update_players() {
+            var players = await hubConnection.invoke("GetPlayers");
+
+            var table = $('#players')[0];
+            for (var i = 0; i < players.length; i++) {
+                var row = table.insertRow();
+                var player = players[i];
+                row.innerHTML = `
+                        <td>${player.name}</td>
+                        <td>${player.rate}</td>
+                        <td><button onclick="onclick_join_game(this)">Вызвать</button></td>`;
+            }
+
+            console.log(players);
+        }
 
         async function update_maps() {
             var select = document.getElementById("map-choise");

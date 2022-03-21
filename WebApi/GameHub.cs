@@ -6,6 +6,7 @@ using SnakeGame2;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -24,13 +25,47 @@ namespace WebApi
 
         public void MarkAsOver() { IsOver = true; IsInProgress = false; }
         public void MarkAsInProgress() { IsInProgress = true;  }
+    }
 
+    public class PlayerInfo
+    {
+        public string Name { get; set; }
+        public int Rate { get; set; } = 1500;
+        public Func<IPlayer> CreateGamePlayer = () => new RemotePlayer();
+        public List<string> IdGamesIsMember = new(); // Ид игр где является участником
+        public List<IPlayer> GamesPlayers = new(); // 
+
+        public IPlayer JoinGame(string gameId)
+        {
+            var player = CreateGamePlayer();
+            IdGamesIsMember.Add(gameId);
+            GamesPlayers.Add(player);
+            return player;
+        }
+
+        public IPlayer GetPlayerFromGame(string gameId)
+        {
+            var index = IdGamesIsMember.IndexOf(gameId);
+            if (index == -1) return null;
+            return GamesPlayers[index];
+        }
+
+        public void ExcludeFromGame(string gameId)
+        {
+            var index = IdGamesIsMember.IndexOf(gameId);
+            if (index == -1) return;
+            IdGamesIsMember.RemoveAt(index);
+            GamesPlayers.RemoveAt(index);
+        }
+
+        public void ExcludeFromGame(IPlayer player)
+        {
+
+        }
     }
 
     public class MainHub : Hub
     {
-        public static List<StartGameInfo> StartGameInfo { get; set; } = new();
-
         public static List<MapInfo> Maps = new()
         {
             new MapInfo() { Name = "Close Map", Map = SnakeGame2.SnakeGameService.TestMapNoTorSpace },
@@ -38,6 +73,7 @@ namespace WebApi
             new MapInfo() { Name = "T + D :)", Map = SnakeGame2.SnakeGameService.Hah },
         };
 
+        public GamesHubService GamesHub { get; }
 
         public class MapInfo
         {
@@ -46,33 +82,37 @@ namespace WebApi
             public int ApplesCount { get; set; }
         }
 
-        public void StartGame(StartGameInfo startGameInfo)
+        public MainHub(GamesHubService gamesHub)
         {
-            StartGameInfo.Add(startGameInfo);
+            GamesHub = gamesHub;
         }
 
-       // public static Dictionary<string, string> ConnectionIdToGroup = new();
+        public void StartGame(StartGameInfo startGameInfo)
+        {
+            GamesHubService.GamesInfo.Add(startGameInfo);
+        }
 
+        public override Task OnConnectedAsync()
+        {
+            GamesHub.TryAddPlayer(Context.UserIdentifier);
+            return base.OnConnectedAsync();
+        }
 
-        //public void Join(string group)
-        //{
-        //    if (group == null)
-        //        return;
+        public override Task OnDisconnectedAsync(Exception exception)
+        {
+          //  GamesHub.RemovePlayer(Context.UserIdentifier);
+            return base.OnDisconnectedAsync(exception);
+        }
 
-        //    Groups.AddToGroupAsync(this.Context.ConnectionId, group);
-        //    ConnectionIdToGroup[this.Context.ConnectionId] = group;
-        //}
+        public List<PlayerInfo> GetPlayers()
+        {
+            return GamesHubService.Players;
+        }
 
-        //public void SendMessage(string message)
-        //{
-        //    if (ConnectionIdToGroup.TryGetValue(this.Context.ConnectionId, out var group) == false)
-        //    {
-        //        Clients.Caller.SendAsync("ReceiveMessage", "Неизвестная группа");
-        //        return;
-        //    }
-
-        //    Clients.Group(group).SendAsync("ReceiveMessage", message);
-        //}
+        public List<StartGameInfo> GetGames()
+        {
+            return GamesHubService.GamesInfo;
+        }
 
         public List<MapInfo> GetMaps()
         {
@@ -88,9 +128,15 @@ namespace WebApi
  
     public class GamesHubService 
     {
+        public static List<StartGameInfo> GamesInfo { get; set; } = new();
+        public static List<PlayerInfo> Players { get; set; } = new() {  // Локальные боты для тестов
+            new PlayerInfo() { Name = "SimpleBot", CreateGamePlayer = () => new SnakeBot()},
+            new PlayerInfo() { Name = "RandomBot", CreateGamePlayer = () => new RandomBotPlayer(7)},
+        };
+
         static Dictionary<string, GameInfo> Games = new();
-        List<IPlayer> Players = new();
-        Dictionary<IPlayer, string> playerToGameId = new();
+        public static Dictionary<IPlayer, string>  PlayerNames = new();
+        public static Dictionary<string, List<IPlayer>> GamePlayers = new();
 
         public class GameInfo
         {
@@ -99,30 +145,52 @@ namespace WebApi
             public int GameTickMs = 300;
         }
 
-        public bool AddPlayer(string gameId, IPlayer player)
+        public void TryAddPlayer(string playerId)
+        {
+            var playerInfo = Players.FirstOrDefault(v => v.Name == playerId);
+
+            if(playerInfo == null)
+            {
+                playerInfo = new PlayerInfo() { Name = playerId };
+                Players.Add(playerInfo);
+            }
+        }
+
+
+        public IPlayer AddPlayerToGame(string gameId, string playerId)
         {
             if (Games.TryGetValue(gameId, out GameInfo game) == false)
             {
-                return false;
+                return null;
             }
 
-            Players.Add(player);
-            playerToGameId[player] = gameId;
+            var playerInfo = Players.FirstOrDefault(v => v.Name == playerId);
 
+            var player = playerInfo.JoinGame(gameId);
+
+            PlayerNames[player] = playerId;
             game.GameService.AddPlayer(player);
 
-            return true;
+            return player;
         }
 
-        public void RemovePlayer(IPlayer player)
+        public IPlayer GetPlayerOfGame(string gameId, string playerId)
         {
-            Players.Remove(player);
-            playerToGameId.Remove(player, out string gameId);
+            var playerInfo = Players.FirstOrDefault(v => v.Name == playerId);
+            return playerInfo.GetPlayerFromGame(gameId);
+        }
 
-            if (Games.TryGetValue(gameId, out GameInfo game))
-            {
-                game.GameService.RemovePlayer(player);
-            }
+        public void RemovePlayer(string playerId)
+        {
+            var playerInfo = Players.FirstOrDefault(v => v.Name == playerId);
+            Players.Remove(playerInfo);
+        }
+
+        public void ExcludeFromGame(string gameId, string playerId)
+        {
+            var playerInfo = Players.FirstOrDefault(v => v.Name == playerId);
+            if (playerInfo == null) return;
+            playerInfo.ExcludeFromGame(gameId);
         }
 
         public GameService GetGameOrNull(string gameId)
@@ -174,6 +242,7 @@ namespace WebApi
     public class GameHub : Hub
     {
         static Dictionary<string, RemotePlayer> RemotePlayers = new();
+        static Dictionary<string, string> ConnectionIdToGameId = new();
 
         IHubContext<GameHub> hubContext { get; }
         GamesHubService GamesHubService { get; }
@@ -189,39 +258,21 @@ namespace WebApi
             if (command == null)
                 return;
 
-            if (RemotePlayers.TryGetValue(Context.UserIdentifier, out RemotePlayer remotePlayer) == false)
+            if (RemotePlayers.TryGetValue(Context.ConnectionId, out RemotePlayer remotePlayer) == false)
+                return;
+
+            if (remotePlayer == null)
                 return;
 
             remotePlayer.SetCommand(command);
         }
 
-        public void JoinGame(string gameId)
-        {
-            if (RemotePlayers.ContainsKey(Context.UserIdentifier)) // Пока что один игрок может участвовать только в одно игре
-                return;
-
-            var remotePlayer = new RemotePlayer();
-
-            if (GamesHubService.AddPlayer(gameId, remotePlayer) == false)
-                return;
-
-            RemotePlayers[Context.UserIdentifier] = remotePlayer;
-        }
-
-        public override Task OnConnectedAsync()
-        {
-            return base.OnConnectedAsync();
-        }
-
         public override Task OnDisconnectedAsync(System.Exception exception)
         {
-            if(RemotePlayers.TryGetValue(Context.UserIdentifier, out RemotePlayer player) == false)
-                return base.OnDisconnectedAsync(exception);
-
-            RemotePlayers.Remove(Context.UserIdentifier);
-
-            GamesHubService.RemovePlayer(player); 
-
+            if(ConnectionIdToGameId.TryGetValue(Context.ConnectionId, out string gameId))
+                GamesHubService.ExcludeFromGame(gameId, Context.UserIdentifier);
+            RemotePlayers.Remove(Context.ConnectionId);
+          
             return base.OnDisconnectedAsync(exception);
         }
 
@@ -243,7 +294,7 @@ namespace WebApi
 
         public void StartGame(string gameId)
         {
-            var startGameInfo = MainHub.StartGameInfo.FirstOrDefault(v => v.GameId == gameId);
+            var startGameInfo = GamesHubService.GamesInfo.FirstOrDefault(v => v.GameId == gameId);
 
             Groups.AddToGroupAsync(Context.ConnectionId, gameId);
 
@@ -253,13 +304,16 @@ namespace WebApi
                 return;
             }
 
+            ConnectionIdToGameId[Context.ConnectionId] = gameId;
+
+
             if (startGameInfo.IsNotStarted)
             {
                 startGameInfo.MarkAsInProgress();
 
                 var snakeGame = new AnimateSnakeGameService
                 (
-                    GetThisUserSnake,
+                    (gameService) => null,
                     animationInfo,
                     GetMap()
                 );
@@ -270,25 +324,17 @@ namespace WebApi
 
                 foreach (var playerName in startGameInfo.Players)
                 {
-                    var player = GetPlayer(playerName);
-                    GamesHubService.AddPlayer(gameId, player);
+                    var player = GamesHubService.AddPlayerToGame(gameId, playerName);
+
+                    if (player is RemotePlayer remotePlayer)
+                        RemotePlayers[Context.ConnectionId] = remotePlayer;
                 }
 
                 GamesHubService.StartGame(gameId, GameTick);
             }
-
-            Snake GetThisUserSnake(SnakeGameService gameService)
+            else
             {
-                if (UserId == null)
-                    return null;
-
-                if (RemotePlayers.TryGetValue(UserId, out RemotePlayer remotePlayer) == false)
-                    return null;
-
-                return gameService
-                    .SnakeSpawners
-                    .FirstOrDefault(v => v.Player == remotePlayer)
-                    .SpawnedSnake;
+                RemotePlayers[Context.ConnectionId] = (RemotePlayer)GamesHubService.GetPlayerOfGame(gameId, Context.UserIdentifier);
             }
 
             string GetMap()
@@ -299,29 +345,12 @@ namespace WebApi
                     return SnakeGame2.SnakeGameService.TestMap;
                 return mapInfo.Map;
             }
-
-            IPlayer GetPlayer(string playerName)
-            {
-                IPlayer player;
-
-                if (playerName == "SimpleBot") // Боты заглушки
-                    player = new SnakeBot();
-                else if (playerName == "RandomBot")
-                    player = new RandomBotPlayer(7);
-                else
-                {
-                    player = new RemotePlayer();
-                    RemotePlayers[playerName] = (RemotePlayer)player;
-                }
-
-                return player;
-            }
         }
 
         public void StopGame(string gameId)
         {
             GamesHubService.StopGame(gameId);
-            var startGameInfo = MainHub.StartGameInfo.FirstOrDefault(v => v.GameId == gameId);
+            var startGameInfo = GamesHubService.GamesInfo.FirstOrDefault(v => v.GameId == gameId);
 
             if (startGameInfo != null)
             {
@@ -331,23 +360,10 @@ namespace WebApi
 
         private void GameTick(string gameId, GameService gameService)
         {
-            string stringMap;
-            List<PlayerInfo> playersScores;
+            var playersScores = GetPlayerInfos();
+            var stringMap = gameService.ToStringMap();
 
-            foreach (var (id, remotePlayer) in RemotePlayers) // Игроки
-            {
-                UserId = id;
-                playersScores = GetPlayerInfos();
-                stringMap = gameService.ToStringMap();// Перерисовка для участников  ПЕРЕДЕЛАТЬ!
-                hubContext.Clients.Client(id).SendAsync("Receive", stringMap, gameService.CurrentTick, playersScores);
-            }
-
-            playersScores = GetPlayerInfos();
-
-            // Наблюдатели
-            UserId = null;
-            stringMap = gameService.ToStringMap();
-            hubContext.Clients.GroupExcept(gameId, RemotePlayers.Keys).SendAsync("Receive", stringMap, gameService.CurrentTick, playersScores);
+            hubContext.Clients.Group(gameId).SendAsync("Receive", stringMap, gameService.CurrentTick, playersScores);
 
             gameService.MakeGameTick();
 
@@ -361,21 +377,10 @@ namespace WebApi
 
                 string GetUserNameFromPlayer(IPlayer player)
                 {
-                    var name = RemotePlayers.FirstOrDefault(v => v.Value == player).Key;
-                    if (name == null || name == "")
-                    {
-                        return $"It's SnakeBot!";
-                    }
-                    if (UserId == name)
-                    {
-                        return $"It's You! {name}";
-                    }
-                    return name;
+                    return GamesHubService.PlayerNames.TryGetValue(player, out string name) ? name : null;
                 };
             }
         }
-
-        static string UserId = null;
 
         static AnimationInfo animationInfo = new();
 
@@ -401,6 +406,7 @@ namespace WebApi
     {
         public virtual string GetUserId(HubConnectionContext connection)
         {
+            return connection.User.Identity.Name;
             return connection.ConnectionId; // Для тестирования
             // или так
             //return connection.User?.FindFirst(ClaimTypes.Name)?.Value;

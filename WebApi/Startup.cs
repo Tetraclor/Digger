@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -7,6 +9,7 @@ using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace WebApi
@@ -21,6 +24,9 @@ namespace WebApi
             services.AddControllers();
             services.AddSignalR();
             services.AddSingleton<GamesHubService>();
+
+            services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -33,8 +39,15 @@ namespace WebApi
 
             app.UseDefaultFiles();
             app.UseStaticFiles();
-
+            
             app.UseRouting();
+
+           
+            app.UseAuthentication();
+            app.UseMiddleware<AnonymousSessionMiddleware>();
+            app.UseAuthorization();
+          
+
             app.UseEndpoints(v => v.MapControllers());
 
             app.UseEndpoints(endpoints =>
@@ -42,6 +55,47 @@ namespace WebApi
                 endpoints.MapHub<GameHub>("/game");
                 endpoints.MapHub<MainHub>("/main");
             });
+
+           
+        }
+    }
+
+    public class AnonymousSessionMiddleware
+    {
+        private readonly RequestDelegate _next;
+        private readonly static HashSet<string> anonimousUserNames = new();
+
+        public AnonymousSessionMiddleware(RequestDelegate next)
+        {
+            _next = next;
+        }
+
+        public async Task InvokeAsync(HttpContext context)
+        {
+            if (!context.User.Identity.IsAuthenticated)
+            {
+                if (string.IsNullOrEmpty(context.User.FindFirstValue(ClaimTypes.Anonymous)))
+                {
+                    var claims = new List<Claim>
+                    {
+                        new Claim(ClaimTypes.Anonymous, GenerateAnonimousUserName())
+                    };
+
+                    // создаем объект ClaimsIdentity
+                    ClaimsIdentity id = new ClaimsIdentity(claims, "ApplicationCookie", ClaimTypes.Anonymous, ClaimsIdentity.DefaultRoleClaimType);
+                    // установка аутентификационных куки
+                    await context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(id));
+                }
+            }
+
+            await _next(context);
+        }
+
+        private string GenerateAnonimousUserName()
+        {
+            var name = $"Гость{anonimousUserNames.Count+1}";
+            anonimousUserNames.Add(name);
+            return name;
         }
     }
 }

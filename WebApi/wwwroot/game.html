@@ -134,7 +134,9 @@
             await draw_board(canvas, data);
         });
 
-        hubConnection.start();
+        hubConnection.start()
+            .then(() => start_game()); // Для быстрого тестирования
+        
 
         function start_game() {
             hubConnection.invoke("StartGame", params.game_id);
