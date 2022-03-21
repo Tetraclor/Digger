@@ -20,14 +20,4 @@ namespace WebApi
             return "Ok Test";
         }
     }
-
-    [Route("game")]
-    public class GameInstansesController : ControllerBase
-    {
-        [HttpGet]
-        public string Get([FromQuery]int gameID)
-        {
-            return "Ok Test " + gameID;
-        }
-    }
 }
