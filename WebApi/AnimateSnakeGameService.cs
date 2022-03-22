@@ -2,6 +2,7 @@
 using GameCore;
 using SnakeGame2;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -11,27 +12,34 @@ namespace WebApi
 {
     public class AnimateSnakeGameService : SnakeGame2.SnakeGameService
     {
-        Dictionary<string, char> spriteNameToChar = new();
-        Dictionary<string, char> spriteNameToCharForUserSnake = new();
+        static readonly ConcurrentDictionary<string, char> spriteNameToChar = new();
+        static readonly ConcurrentDictionary<string, char> spriteNameToCharForUserSnake = new();
 
-        public AnimateSnakeGameService(Func<SnakeGameService, Snake> getUserSnake, AnimationInfo initAnimateInfo, string mapString) : base(mapString)
+        static AnimateSnakeGameService()
         {
-            spriteNameToChar = new Dictionary<string, char>();
-
             var ch = 'a';
-
             foreach (var e in new DirectoryInfo("wwwroot/Images/Snake-Green").GetFiles("*.png"))
             {
                 var imagename = e.Name.ToLower();
                 ch = (char)(ch + 1);
                 spriteNameToChar[imagename] = ch;
-                initAnimateInfo.MapCharToSprite[ch] = $"/Images/Snake-Green/{imagename}";
             }
             foreach (var e in new DirectoryInfo("wwwroot/Images/Snake").GetFiles("*.png"))
             {
                 var imagename = e.Name.ToLower();
                 ch = (char)(ch + 1);
                 spriteNameToCharForUserSnake[imagename] = ch;
+            }
+        }
+
+        public AnimateSnakeGameService(Func<SnakeGameService, Snake> getUserSnake, AnimationInfo initAnimateInfo, string mapString) : base(mapString)
+        {
+            foreach (var (imagename, ch) in spriteNameToChar)
+            {
+                initAnimateInfo.MapCharToSprite[ch] = $"/Images/Snake-Green/{imagename}";
+            }
+            foreach (var (imagename, ch) in spriteNameToCharForUserSnake)
+            {
                 initAnimateInfo.MapCharToSprite[ch] = $"/Images/Snake/{imagename}";
             }
             GetUserSnake = getUserSnake;
@@ -84,7 +92,7 @@ namespace WebApi
 
             return new string(stringMap);
 
-            void Draw(string name, Point point, Dictionary<string, char> spriteNameToChar)
+            void Draw(string name, Point point, ConcurrentDictionary<string, char> spriteNameToChar)
             {
                 if (name.Contains("None")) return;
                 var ch = spriteNameToChar[$"{name.ToLower()}.png"];
