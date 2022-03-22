@@ -32,7 +32,7 @@ namespace WebApi
             }
         }
 
-        public AnimateSnakeGameService(Func<SnakeGameService, Snake> getUserSnake, AnimationInfo initAnimateInfo, string mapString) : base(mapString)
+        public static void InitAnimationInfo(AnimationInfo initAnimateInfo)
         {
             foreach (var (imagename, ch) in spriteNameToChar)
             {
@@ -42,6 +42,10 @@ namespace WebApi
             {
                 initAnimateInfo.MapCharToSprite[ch] = $"/Images/Snake/{imagename}";
             }
+        }
+
+        public AnimateSnakeGameService(Func<SnakeGameService, Snake> getUserSnake, string mapString) : base(mapString)
+        {
             GetUserSnake = getUserSnake;
         }
 

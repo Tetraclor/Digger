@@ -341,7 +341,6 @@ namespace WebApi
                 var snakeGame = new AnimateSnakeGameService
                 (
                     (gameService) => null,
-                    animationInfo,
                     GetMap()
                 );
 
@@ -405,17 +404,23 @@ namespace WebApi
             }
         }
 
-        static AnimationInfo animationInfo = new();
-
         public AnimationInfo GetAnimateInfo()
         {
-            return animationInfo;
+            return AnimationInfo.Instanse;
         }
     }
 
     public class AnimationInfo
     {
-        public Dictionary<char, string> MapCharToSprite { get; set; } = new()
+
+        public static AnimationInfo Instanse = new();
+
+        static AnimationInfo()
+        {
+            AnimateSnakeGameService.InitAnimationInfo(Instanse);
+        }
+
+        public ConcurrentDictionary<char, string> MapCharToSprite { get; set; } = new()
         {
             ['H'] = "/Images/HeadSnake.png",
             ['B'] = "/Images/BodySnake.png",
