@@ -1,5 +1,6 @@
 ﻿using GameCore;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -9,8 +10,8 @@ namespace GameCore
 {
     public static class CreatureMapCreator
     {
-        private static readonly Dictionary<string, Func<ICreature>> factory = new Dictionary<string, Func<ICreature>>();
-        private static readonly Dictionary<char, string> charToClassName = new Dictionary<char, string>(); 
+        private static readonly ConcurrentDictionary<string, Func<ICreature>> factory = new ();
+        private static readonly ConcurrentDictionary<char, string> charToClassName = new (); 
 
         private static string icreatureTypeName = typeof(ICreature).Name;
         public static Assembly assembly;

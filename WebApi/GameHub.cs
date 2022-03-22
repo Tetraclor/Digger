@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using SnakeGame2;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
@@ -17,6 +18,7 @@ namespace WebApi
         public string GameId { get; set; }
         public string MapName { get; set; }
         public int ApplesCount { get; set; }
+        public int TicksToEnd { get; set; }
         public string[] Players { get; set; }
 
         public bool IsOver { get; private set; } = false;
@@ -70,7 +72,9 @@ namespace WebApi
         {
             new MapInfo() { Name = "Close Map", Map = SnakeGame2.SnakeGameService.TestMapNoTorSpace },
             new MapInfo() { Name = "Open Map", Map = SnakeGame2.SnakeGameService.TestMap },
-            new MapInfo() { Name = "T + D :)", Map = SnakeGame2.SnakeGameService.Hah },
+           // new MapInfo() { Name = "T + D :)", Map = SnakeGame2.SnakeGameService.Hah },
+            new MapInfo() { Name = "Free Map", Map = SnakeGame2.SnakeGameService.FreeMap},
+            new MapInfo() { Name = "Small Map", Map = SnakeGame2.SnakeGameService.SmallMap},
         };
 
         public GamesHubService GamesHub { get; }
@@ -132,9 +136,19 @@ namespace WebApi
         public static List<PlayerInfo> Players { get; set; } = new() {  // Локальные боты для тестов
             new PlayerInfo() { Name = "SimpleBot", CreateGamePlayer = () => new SnakeBot()},
             new PlayerInfo() { Name = "RandomBot", CreateGamePlayer = () => new RandomBotPlayer(7)},
+            new PlayerInfo() { Name = "SimpleBot", CreateGamePlayer = () => new SnakeBot() },
+            new PlayerInfo() { Name = "RandomBot", CreateGamePlayer = () => new RandomBotPlayer(7) },
+            new PlayerInfo() { Name = "SimpleBot", CreateGamePlayer = () => new SnakeBot() },
+            new PlayerInfo() { Name = "RandomBot", CreateGamePlayer = () => new RandomBotPlayer(7) },
+            new PlayerInfo() { Name = "SimpleBot", CreateGamePlayer = () => new SnakeBot() },
+            new PlayerInfo() { Name = "RandomBot", CreateGamePlayer = () => new RandomBotPlayer(7) },
+            new PlayerInfo() { Name = "SimpleBot", CreateGamePlayer = () => new SnakeBot() },
+            new PlayerInfo() { Name = "RandomBot", CreateGamePlayer = () => new RandomBotPlayer(7) },
+            new PlayerInfo() { Name = "SimpleBot", CreateGamePlayer = () => new SnakeBot() },
+            new PlayerInfo() { Name = "RandomBot", CreateGamePlayer = () => new RandomBotPlayer(7) },
         };
 
-        static Dictionary<string, GameInfo> Games = new();
+        static ConcurrentDictionary<string, GameInfo> Games = new();
         public static Dictionary<IPlayer, string>  PlayerNames = new();
         public static Dictionary<string, List<IPlayer>> GamePlayers = new();
 
@@ -143,6 +157,7 @@ namespace WebApi
             public GameService GameService { get; set; }
             public System.Timers.Timer timer = new System.Timers.Timer();
             public int GameTickMs = 300;
+            public int TicksToEnd = 1000;
         }
 
         public void TryAddPlayer(string playerId)
@@ -202,10 +217,11 @@ namespace WebApi
             return game.GameService;
         }
 
-        public void CreateGame(string gameId, GameService gameService)
+        public void CreateGame(string gameId, GameService gameService, int ticksToEnd)
         {
             var gameInfo = new GameInfo();
             gameInfo.GameService = gameService;
+            gameInfo.TicksToEnd = ticksToEnd;
             Games[gameId] = gameInfo;
         }
 
@@ -218,10 +234,19 @@ namespace WebApi
 
             var timer = gameInfo.timer;
             var gameService = gameInfo.GameService;
+            var ticksToEnd = gameInfo.TicksToEnd;
 
-            timer.Elapsed += (o, e) => GameTick(gameId, gameService);
+            timer.Elapsed += (o, e) =>
+            {
+                if (gameService.CurrentTick <= ticksToEnd)
+                    GameTick(gameId, gameService);
+                else
+                    StopGame(gameId);
+            };
+
             timer.Interval = gameInfo.GameTickMs;
             timer.Enabled = true;
+            
 
             timer.Start();
 
@@ -234,8 +259,10 @@ namespace WebApi
             {
                 return;
             }
+            var startGameInfo = GamesInfo.FirstOrDefault(v => v.GameId == gameId);
+            startGameInfo.MarkAsOver();
             game.timer.Stop();
-            Games.Remove(gameId);
+            Games.Remove(gameId, out GameInfo gameInfo);
         }
     }
 
@@ -292,7 +319,7 @@ namespace WebApi
             }
         }
 
-        public void StartGame(string gameId)
+        public StartGameInfo StartGame(string gameId)
         {
             var startGameInfo = GamesHubService.GamesInfo.FirstOrDefault(v => v.GameId == gameId);
 
@@ -301,7 +328,7 @@ namespace WebApi
             if (startGameInfo == null)
             {
                 Clients.Caller.SendAsync("ShowMessage", $"Игры с таким id={gameId} не найдено");
-                return;
+                return null;
             }
 
             ConnectionIdToGameId[Context.ConnectionId] = gameId;
@@ -320,7 +347,7 @@ namespace WebApi
 
                 snakeGame.ApplesManager.SetMaxApplesCount(startGameInfo.ApplesCount);
 
-                GamesHubService.CreateGame(gameId, snakeGame);
+                GamesHubService.CreateGame(gameId, snakeGame, startGameInfo.TicksToEnd);
 
                 foreach (var playerName in startGameInfo.Players)
                 {
@@ -337,6 +364,8 @@ namespace WebApi
                 RemotePlayers[Context.ConnectionId] = (RemotePlayer)GamesHubService.GetPlayerOfGame(gameId, Context.UserIdentifier);
             }
 
+            return startGameInfo;
+
             string GetMap()
             {
                 var mapInfo = MainHub.Maps
@@ -350,12 +379,6 @@ namespace WebApi
         public void StopGame(string gameId)
         {
             GamesHubService.StopGame(gameId);
-            var startGameInfo = GamesHubService.GamesInfo.FirstOrDefault(v => v.GameId == gameId);
-
-            if (startGameInfo != null)
-            {
-                startGameInfo.MarkAsOver();
-            }
         }
 
         private void GameTick(string gameId, GameService gameService)

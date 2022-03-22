@@ -63,9 +63,20 @@
             <input type="button" id="startBtn" class="nav-item" value="Начать игру" onclick="start_game()" />
             <input type="button" id="stopBtn" class="nav-item" value="Остановить игру" onclick="stop_game()" />
         </div>
-        <div class="nav-item">
-            <b>Кол-во яблок:</b>
-            <input type="number" id="apples-count" class="nav-item" value="10" disabled />
+        <div class="nav-item" id="game-info">
+            <div class="nav-item">
+                <b>Карта:</b><span id="map-name"></span>
+            </div>
+            <div class="nav-item">
+                <b>Состояние игры:</b><span id="game-state"></span>
+            </div>
+            <div class="nav-item">
+                <b>Ограничение по тикам:</b><span id="ticks-to-end"></span>
+            </div>
+            <div class="nav-item">
+                <b>Кол-во яблок:</b><span id="apples-count"></span>
+            </div>
+
         </div>
         <div class="nav-item">
             Game Tick:<b id="tick" class="nav-item">0</b>
@@ -126,10 +137,10 @@
             .build();
 
         hubConnection.on("Receive", async function (data, tick, playrs_info) {
+            var command = bot_act();
+            await hubConnection.invoke("SendTurn", command);
             document.getElementById("tick").innerText = tick;
             var canvas = document.getElementById('canvas');
-            var command = bot_act();
-            hubConnection.invoke("SendTurn", command);
             update_scores(playrs_info);
             await draw_board(canvas, data);
         });
@@ -139,8 +150,24 @@
         
 
         function start_game() {
-            hubConnection.invoke("StartGame", params.game_id);
+            hubConnection.invoke("StartGame", params.game_id).then(v => set_game_info(v));
         }
+
+        function set_game_info(game_info) {
+            document.getElementById('ticks-to-end').innerText = game_info.ticksToEnd;
+            document.getElementById('map-name').innerText = game_info.mapName;
+            document.getElementById('apples-count').innerText = game_info.applesCount;
+
+            var get_game_state = (inf) => {
+                if (inf.isOver) return "Заверешена";
+                if (inf.isNotStarted) return "Не запущена";
+                if (inf.isInProgress) return "В процессе";
+            }
+
+            document.getElementById('game-state').innerText = get_game_state(game_info);
+            
+        }
+
 
         function stop_game() {
             hubConnection.invoke("StopGame", params.game_id);

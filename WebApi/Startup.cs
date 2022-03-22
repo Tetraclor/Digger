@@ -91,9 +91,11 @@ namespace WebApi
             await _next(context);
         }
 
+        private static Random random = new Random();
+
         private string GenerateAnonimousUserName()
         {
-            var name = $"Гость{anonimousUserNames.Count+1}";
+            var name = $"Гость{random.Next(100000, 999999)}";
             anonimousUserNames.Add(name);
             return name;
         }

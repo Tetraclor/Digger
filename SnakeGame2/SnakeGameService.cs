@@ -75,6 +75,48 @@ S         WW         S
 W         WW         W
 WWWWW WWWWWWWWWW WWWWW
 ";
+        public const string FreeMap = @"
+S
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+     
+S                    S
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+                     S
+";
+        public const string SmallMap = @"
+W         W
+
+ 
+ 
+W         W
+S         W
+W         S
+W         W
+ 
+ 
+ 
+W         W
+";
         public const string Hah = @"
 WWWWW     W     WWW    
   W       W     W  W   

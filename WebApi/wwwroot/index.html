@@ -30,7 +30,6 @@
         }
 
         canvas{
-
             background-color: aquamarine;
         }
 
@@ -43,10 +42,21 @@
             margin: 10px;
         }
 
+        .overflow {
+            overflow: scroll;
+            max-height: 300px;
+            overflow-x: hidden;
+            overflow-y:auto;
+        }
+
         table {
             font-family: arial, sans-serif;
             border-collapse: collapse;
             width: 100%;
+        }
+
+        th{
+           
         }
 
         td, th {
@@ -62,13 +72,8 @@
 </head>
 <body>
     <div id="main">
-        <div id="create-game-box" class="item">
-            <h2 class="item">Создание игры</h2>
-            <div class="item">
-                <span>Кол-во яблок:</span>
-                <input type="number" id="apples-count" class="nav-item" value="10" onchange="window.applesCount = parseInt(this.value)" />
-            </div>
-            <table id="members" class="item">
+        <div class="item overflow">
+            <table id="members" class="">
                 <caption> Участники </caption>
                 <tr>
                     <th>Игрок</th>
@@ -76,6 +81,18 @@
                     <th></th>
                 </tr>
             </table>
+        </div>
+        <div id="create-game-box" class="item">
+            <h2 class="item">Создание игры</h2>
+            <div class="item">
+                <span>Тиков до конца игры:</span>
+                <input type="number" id="ticks-to-end" class="nav-item" value="1000" />
+            </div>
+            <div class="item">
+                <span>Кол-во яблок:</span>
+                <input type="number" id="apples-count" class="nav-item" value="10" />
+            </div>
+
             <div class="item">
                 <span>Выбор карты:</span>
                 <select id="map-choise" onchange="draw_map()">
@@ -83,35 +100,44 @@
             </div>
             <canvas id="map-canvas"></canvas>
             <div class="item">
-                <button onclick="create_game()">СОЗДАТЬ ИГРУ</button>
+                <p>Количество копий запусков (для тестирования)</p>
+                <input type="number"  id="game-copy" class="nav-item" value="1" />
+                <button onclick="create_copies_game()">СОЗДАТЬ ИГРУ</button>
             </div>
         </div>
-
+            
         <div id="nav" class="item">
-            <table id="players">
-                <caption>
-                    Список игроков
-                </caption>
-                <tr>
-                    <th>Игрок</th>
-                    <th>Рейтинг</th>
-                    <th>Вызов</th>
-                </tr>
-            </table>
-            <table id="games">
-                <caption>
-                    Список идущих игр
-                </caption>
-                <tr>
-                    <th>Игра</th>
-                    <th>Карта</th>
-                    <th>Игроки</th>
-                    <th>Cмотреть</th>
-                </tr>
-            </table>
-           <div id="message-box">
+            <div class="overflow">
+                <table id="players" class="overflow">
+                    <caption>
+                        Список игроков
+                    </caption>
+                    <tr>
+                        <th>Игрок</th>
+                        <th>Рейтинг</th>
+                        <th>Вызов</th>
+                    </tr>
+                </table>
+            </div>
 
-           </div>
+            <div class="overflow">
+                <table id="games">
+                    <caption>
+                        Список идущих игр
+                    </caption>
+                    <tr>
+                        <th>Игра</th>
+                        <th>Карта</th>
+                        <th>Игроки</th>
+                        <th>Состояние</th>
+                        <th></th>
+                    </tr>
+                </table>
+            </div>
+
+            <div id="message-box">
+
+            </div>
         </div>
     </div>
 
@@ -166,6 +192,15 @@
             console.log(window.members);
         }
 
+        function create_copies_game() {
+
+            var count = parseInt($('#game-copy')[0].value);
+
+            for (var i = 0; i < count; i++) {
+                create_game();
+            }
+        }
+
         function create_game() {
             var players = window.members.map(v => v.name);
 
@@ -175,19 +210,21 @@
 
             console.log(gameId);
 
+            var ticksToEnd = parseInt($('#ticks-to-end')[0].value);
+            var applesCount = parseInt($('#apples-count')[0].value);
+
             hubConnection.invoke("StartGame", {
                 mapName: get_choised_mapinfo().name,
                 gameId: gameId,
-                applesCount: window.applesCount,
-                players: players
+                applesCount: applesCount,
+                players: players,
+                ticksToEnd: ticksToEnd
 
             }).then(() => {
                 window.open(`game.html?game_id=${gameId}`);
                 //location.href = `game.html?game_id=${gameId}`;
             });
         }
-
-        window.applesCount = 10;
 
         const hubConnection = new signalR.HubConnectionBuilder()
             .withUrl("/main")
@@ -200,12 +237,20 @@
         async function update_games() {
             var games = await hubConnection.invoke("GetGames");
             var table = $('#games')[0];
+
+            var get_game_state = (inf) => {
+                if (inf.isOver) return "Заверешена";
+                if (inf.isNotStarted) return "Не запущена";
+                if (inf.isInProgress) return "В процессе";
+            }
+
             for (var i = 0; i < games.length; i++) {
                 var row = table.insertRow();
                 var info = games[i];
                 row.innerHTML = `<td>Snake</td >
                         <td>${info.mapName}</td>
                         <td>${info.players}</td>
+                        <td>${get_game_state(info)}</td>
                         <td><a href="game.html?game_id=${info.gameId}">Смотреть</a></td>`;
             }
 
