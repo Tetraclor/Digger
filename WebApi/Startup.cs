@@ -57,8 +57,6 @@ namespace WebApi
                 endpoints.MapHub<GameHub>("/game");
                 endpoints.MapHub<MainHub>("/main");
             });
-
-           
         }
     }
 

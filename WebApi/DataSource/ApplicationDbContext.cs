@@ -11,10 +11,14 @@ namespace WebApi.DataSource
         {
             Database.EnsureCreated();
         }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseMySql("server=localhost;user=root;password=кщще;database=userdb;",
-                new MySqlServerVersion(new Version(8, 0, 28)));
+            
+            optionsBuilder.UseSqlite("Filename=SnakeArena.sqlite");
+
+            //optionsBuilder.UseSqlite("server=localhost;user=root;password=кщще;database=userdb;",
+            //    new MySqlServerVersion(new Version(8, 0, 28)));
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
