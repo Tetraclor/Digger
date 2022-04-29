@@ -35,7 +35,6 @@
     <ProjectReference Include="..\Common\Common.csproj" />
     <ProjectReference Include="..\GameCore\GameCore.csproj" />
     <ProjectReference Include="..\GameDigger\GameDigger.csproj" />
-    <ProjectReference Include="..\GameSnake\GameSnake.csproj" />
     <ProjectReference Include="..\SnakeGame2\SnakeGame2.csproj" />
   </ItemGroup>
 

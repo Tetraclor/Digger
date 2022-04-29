@@ -75,57 +75,6 @@ S         WW         S
 W         WW         W
 WWWWW WWWWWWWWWW WWWWW
 ";
-        public const string FreeMap = @"
-S
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
-     
-S                    S
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
-                     S
-";
-        public const string SmallMap = @"
-W         W
-
- 
- 
-W         W
-S         W
-W         S
-W         W
- 
- 
- 
-W         W
-";
-        public const string Hah = @"
-WWWWW     W     WWW    
-  W       W     W  W   
-  W       W     W   W  
-  S    WWWWWWW  S   W  
-  W       W     W   W  
-  W       W     W  W   
-  W       W     WWW
-";
 
         public SnakeGameService(string mapString = TestMap) : base(mapString, typeof(Snake))
         {
@@ -198,8 +147,6 @@ WWWWW     W     WWW
         public override void MakeGameTick()
         {
             CurrentTick++;
-            ClearMap();
-            PrintToMap();
 
             foreach (var snakeSpawner in SnakeSpawners.Where(v => v.IsActive))
             {
@@ -296,10 +243,7 @@ WWWWW     W     WWW
         {
             foreach (var item in mapAble)
             {
-                item.SetToMap((point, creature) =>
-                {
-                    GameState.SetCreature(point, creature);
-                });
+                item.SetToMap(GameState.SetCreature);
             }
         }
 

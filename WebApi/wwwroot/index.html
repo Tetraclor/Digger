@@ -17,6 +17,26 @@
             font-family: Consolas;
         }
 
+        header {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+
+            position: absolute;
+            background-color: gray;
+            top: 0px;
+            width: 100vw;
+        }
+
+        header div {
+            display: flex;
+            align-items: center;
+        }
+
+        header button{
+            height: 70%;
+        }
+
         #main{
             display: flex;
             flex-direction: row-reverse;
@@ -27,6 +47,15 @@
             flex-direction: column;
             justify-content: space-around;
             height: 80vh;
+        }
+
+        #auth{
+            display: none;
+            flex-direction: column;
+            position: fixed;
+            background-color: gray;
+            padding: 20px;
+            border-radius: 2px;
         }
 
         canvas{
@@ -71,6 +100,14 @@
     </style>
 </head>
 <body>
+    <header>
+        <h3 class="item">SnakeArena</h3>
+        <div>
+            <h4 id="user-name"></h4>
+            <button class="item" onclick="show_auth()">Авторизоваться</button>
+        </div>
+    </header>
+
     <div id="main">
         <div class="item overflow">
             <table id="members" class="">
@@ -141,6 +178,13 @@
         </div>
     </div>
 
+    <div id="auth" hidden>   
+        <span>Имя</span><input class="item" id="login" type="text" value="TestUser" />
+        <span>Пароль</span><input class="item" id="password" type="password" value="0" />
+        <button class="item" onclick="login();">Авторизоваться</button>
+        <button class="item" onclick="reg();">Зарегисрироваться</button>
+    </div>
+
     <script src="js/signalr/dist/browser/signalr.min.js"></script>
     <script src="js/draw.js"></script>
     <script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
@@ -161,6 +205,54 @@
         });
 
         window.members = [];
+
+        function show_auth() {
+            form = $('#auth')[0];
+          
+            form.hidden = false;
+            form.style.display = 'flex';
+        }
+
+        function hide_auth() {
+            form = $('#auth')[0];
+           
+            form.hidden = true;
+            form.style.display = 'none';
+        }
+
+        async function login() {
+            var login = $('#login')[0].value;
+            var password = $('#password')[0].value;
+
+            var result = await fetch(`api/login?login=${login}&password=${password}`)
+            var answer = await result.text();
+
+            if (!result.ok) {
+                show_error(answer);
+                return;
+            }
+
+            location.reload();
+        }
+
+        async function reg() {
+            var login = $('#login')[0].value;
+            var password = $('#password')[0].value;
+
+            var result = await fetch(`api/reg?login=${login}&password=${password}`)
+            var answer = await result.text();
+
+            if (!result.ok) {
+                show_error(answer);
+                return;
+            }
+            
+            location.reload();
+        }
+
+        function show_error(msg) {
+            alert(msg);
+        }
 
         function onclick_join_game(cell) {
             var r = cell.parentElement.parentElement.cells;
@@ -195,25 +287,23 @@
         function create_copies_game() {
 
             var count = parseInt($('#game-copy')[0].value);
+            var open_window = count <= 10; // Не открывать окна если запущено копий больше 10
 
             for (var i = 0; i < count; i++) {
-                create_game();
+                console.log(open_window);
+                create_game(open_window);
             }
         }
 
-        function create_game() {
+        function create_game(open_window) {
             var players = window.members.map(v => v.name);
 
-            console.log(players);
-
             var gameId = makeid(5);
-
-            console.log(gameId);
 
             var ticksToEnd = parseInt($('#ticks-to-end')[0].value);
             var applesCount = parseInt($('#apples-count')[0].value);
 
-            hubConnection.invoke("StartGame", {
+            return hubConnection.invoke("StartGame", {
                 mapName: get_choised_mapinfo().name,
                 gameId: gameId,
                 applesCount: applesCount,
@@ -221,13 +311,17 @@
                 ticksToEnd: ticksToEnd
 
             }).then(() => {
-                window.open(`game.html?game_id=${gameId}`);
+                console.log(open_window);
+                if (open_window)
+                    window.open(`game.html?game_id=${gameId}`);
                 //location.href = `game.html?game_id=${gameId}`;
             });
         }
 
         const hubConnection = new signalR.HubConnectionBuilder()
             .withUrl("/main")
+            .configureLogging(signalR.LogLevel.Information)
+            .withAutomaticReconnect()
             .build();
 
         hubConnection.on("ShowMessage", (msg) => {
@@ -259,6 +353,8 @@
 
         async function update_players() {
             var players = await hubConnection.invoke("GetPlayers");
+            var myPlayer = await hubConnection.invoke("GetMe");
+            $('#user-name')[0].innerText = `${myPlayer.name} ${myPlayer.rate}`;
 
             var table = $('#players')[0];
             for (var i = 0; i < players.length; i++) {

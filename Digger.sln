@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31911.196
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32210.238
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GameCore", "GameCore\GameCore.csproj", "{6E9C4374-7073-4294-A969-A412D78336EE}"
 EndProject
@@ -9,15 +9,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GameDigger", "GameDigger\Ga
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WinFormsGameView", "WinFormsGameView\WinFormsGameView.csproj", "{71715488-FF72-46CF-AF91-CCD315755108}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GameSnake", "GameSnake\GameSnake.csproj", "{8DC2929D-BBBD-4FDF-948B-772F189F765B}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebApi", "WebApi\WebApi.csproj", "{1FAAF0D5-5F55-4118-B9EF-C67A43ED42CE}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common", "Common\Common.csproj", "{4784A107-64CA-4550-86AB-6C1C12DDF643}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SnakeTests", "SnakeTests\SnakeTests.csproj", "{2B7D6E05-65C9-4E5C-889E-8D58C8920D89}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SnakeGame2", "SnakeGame2\SnakeGame2.csproj", "{9327AFD6-56A4-46F2-81FE-2E1F5F0A1C92}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SnakeGame2", "SnakeGame2\SnakeGame2.csproj", "{9327AFD6-56A4-46F2-81FE-2E1F5F0A1C92}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -37,10 +35,6 @@ Global
 		{71715488-FF72-46CF-AF91-CCD315755108}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{71715488-FF72-46CF-AF91-CCD315755108}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{71715488-FF72-46CF-AF91-CCD315755108}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8DC2929D-BBBD-4FDF-948B-772F189F765B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8DC2929D-BBBD-4FDF-948B-772F189F765B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8DC2929D-BBBD-4FDF-948B-772F189F765B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8DC2929D-BBBD-4FDF-948B-772F189F765B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1FAAF0D5-5F55-4118-B9EF-C67A43ED42CE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1FAAF0D5-5F55-4118-B9EF-C67A43ED42CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1FAAF0D5-5F55-4118-B9EF-C67A43ED42CE}.Release|Any CPU.ActiveCfg = Release|Any CPU

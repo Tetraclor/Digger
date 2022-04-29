@@ -8,7 +8,6 @@ namespace GameCore
 {
     public class GameState
     {
-        public Dictionary<ICreature, Point> CreaturesLocations = new Dictionary<ICreature, Point>();
         public readonly ICreature[,] Map;
         public int Scores { get; set; }
         public bool IsOver { get; set; }
@@ -29,8 +28,6 @@ namespace GameCore
 
         public void SetCreature(Point point, ICreature creature)
         {
-            if(creature != null)
-                CreaturesLocations[creature] = point;
             Map[point.X, point.Y] = creature;
         }
 

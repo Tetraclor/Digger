@@ -142,7 +142,7 @@
             document.getElementById("tick").innerText = tick;
             var canvas = document.getElementById('canvas');
             update_scores(playrs_info);
-            await draw_board(canvas, data);
+            await draw_board(canvas, data, 700, 700);
         });
 
         hubConnection.start()

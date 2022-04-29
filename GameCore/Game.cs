@@ -22,64 +22,9 @@ namespace GameCore
             GameState = gameState;
         }
 
-        public List<ICreature> GetCandidates(Point point)
-        {
-            return Candidates[point.X, point.Y].ToList();
-        }
-
-        public void CreateCreature(Point point, ICreature creature)
-        {
-            if (NowBeginAct)
-            {
-                Transformations.Add(new CreatureTransformation(point, creature));
-                return;
-            }
-            else if(NowEndAct == false)
-            {
-                Temp.Add(new CreatureTransformation(point, creature));
-                return;
-            }
-            if(CandidateDict.TryGetValue(point, out CandidatesInfo info))
-            {
-                info.Candidates.Add(creature);
-            }
-            else
-            {
-                var candInfo = new CandidatesInfo() { 
-                    Point = point, 
-                    Candidates = new List<ICreature> { creature } 
-                };
-                var creatureInMap = GameState.GetCreatureOrNull(point);
-                if (creatureInMap != null) candInfo.Candidates.Add(creatureInMap);
-                CandidateDict[point] = candInfo;
-                CandidatesQueue.Enqueue(candInfo);
-            }
-        }
-
-        public void DeleteCreature(ICreature creature)
-        {
-            if (GameState.CreaturesLocations.TryGetValue(creature, out Point location))
-            if (CandidateDict.TryGetValue(location, out CandidatesInfo info))
-            {
-                info.Candidates.Remove(creature);
-            }
-            var cand = Candidates[location.X, location.Y];
-            cand.Remove(creature);
-            var del = Transformations.Where(v => v.Creature == creature).FirstOrDefault();
-            Transformations.Remove(del);
-            GameState.SetCreature(location, null);
-        }
-
-        public void DeleteCreature(Point point)
-        {
-            CandidateDict.Remove(point);
-            GameState.SetCreature(point, null);
-        }
-
         public void BeginAct()
         {
             NowBeginAct = true;
-            GameState.CreaturesLocations.Clear();
             Transformations.Clear();
 
             Transformations.AddRange(Temp);
@@ -90,8 +35,6 @@ namespace GameCore
                 {
                     var creature = GameState.Map[x, y];
                     if (creature == null) continue;
-
-                    GameState.CreaturesLocations[creature] = new Point(x, y);
 
                     var command = creature.Act(GameState, x, y);
 

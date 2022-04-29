@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using WebApi.DataSource;
 
 namespace WebApi
 {
@@ -20,6 +21,8 @@ namespace WebApi
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddDbContext<ApplicationDbContext>(ServiceLifetime.Singleton);
+
             services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
             services.AddControllers();
             services.AddSignalR();
@@ -46,7 +49,6 @@ namespace WebApi
             app.UseAuthentication();
             app.UseMiddleware<AnonymousSessionMiddleware>();
             app.UseAuthorization();
-          
 
             app.UseEndpoints(v => v.MapControllers());
 
@@ -65,8 +67,9 @@ namespace WebApi
         private readonly RequestDelegate _next;
         private readonly static HashSet<string> anonimousUserNames = new();
 
-        public AnonymousSessionMiddleware(RequestDelegate next)
+        public AnonymousSessionMiddleware(RequestDelegate next, ApplicationDbContext applicationContext)
         {
+            var litst = applicationContext.Users.ToList();
             _next = next;
         }
 
@@ -74,15 +77,15 @@ namespace WebApi
         {
             if (!context.User.Identity.IsAuthenticated)
             {
-                if (string.IsNullOrEmpty(context.User.FindFirstValue(ClaimTypes.Anonymous)))
+                if (string.IsNullOrEmpty(context.User.FindFirstValue(ClaimTypes.Name)))
                 {
                     var claims = new List<Claim>
                     {
-                        new Claim(ClaimTypes.Anonymous, GenerateAnonimousUserName())
+                        new Claim(ClaimTypes.Name, GenerateAnonimousUserName())
                     };
 
                     // создаем объект ClaimsIdentity
-                    ClaimsIdentity id = new ClaimsIdentity(claims, "ApplicationCookie", ClaimTypes.Anonymous, ClaimsIdentity.DefaultRoleClaimType);
+                    var id = new ClaimsIdentity(claims, "ApplicationCookie", ClaimTypes.Name, ClaimsIdentity.DefaultRoleClaimType);
                     // установка аутентификационных куки
                     await context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(id));
                 }
