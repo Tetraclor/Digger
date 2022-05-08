@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace WebApi.DataSource
@@ -30,6 +31,16 @@ namespace WebApi.DataSource
             }
         }
 
+        public static User GetOrNull(string token)
+        {
+            using (var dbContext = new ApplicationDbContext())
+            {
+                var user = dbContext.Users.FirstOrDefault(v => v.Token == token);
+                return user;
+            }
+        }
+    
+
         public static User GetOrNull(string login, string passwrod)
         {
             using(var dbContext = new ApplicationDbContext())
@@ -47,11 +58,31 @@ namespace WebApi.DataSource
             {
                 var user = dbContext.Users.FirstOrDefault(v => v.Name == login);
                 if (user != null) return null;
-                user = new User() { Name = login, Password = password, Rating = 1500 };
+                user = new User() { Name = login, Password = password, Rating = 1500, Token = CreateToken() };
                 dbContext.Add(user);
                 dbContext.SaveChanges();
                 return user;
             }
+        }
+
+        public static void SaveNewRating(params UserAppInfo[] usersApp)
+        {
+            using (var dbContext = new ApplicationDbContext())
+            {
+                foreach(var userApp in usersApp)
+                {
+                    var user = dbContext.Users.FirstOrDefault(v => v.Name == userApp.Name);
+                    if (user == null) 
+                        continue;
+                    user.Rating = (uint)userApp.Rate;
+                }
+                dbContext.SaveChanges();
+            }
+        }
+
+        private static string CreateToken()
+        {
+            return Convert.ToBase64String(Guid.NewGuid().ToByteArray());
         }
     }
 }

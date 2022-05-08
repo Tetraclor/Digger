@@ -354,7 +354,8 @@
         async function update_players() {
             var players = await hubConnection.invoke("GetPlayers");
             var myPlayer = await hubConnection.invoke("GetMe");
-            $('#user-name')[0].innerText = `${myPlayer.name} ${myPlayer.rate}`;
+            var myToken = await hubConnection.invoke("GetMyToken");
+            $('#user-name')[0].innerText = `${myToken} ${myPlayer.name} ${myPlayer.rate}`;
 
             var table = $('#players')[0];
             for (var i = 0; i < players.length; i++) {

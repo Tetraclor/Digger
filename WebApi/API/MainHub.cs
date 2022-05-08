@@ -37,6 +37,8 @@ namespace WebApi
         public GamesHubService GamesHub { get; }
         public HttpContext HttpContext { get; }
 
+
+
         public MainHub(GamesHubService gamesHub)
         {
             GamesHub = gamesHub;
@@ -45,6 +47,8 @@ namespace WebApi
 
         public void StartGame(StartGameInfo startGameInfo)
         {
+            BotsHub.JoinConnectedBotsToGame(startGameInfo.Players, startGameInfo.GameId);
+
             GamesHubService.GamesInfo.Add(startGameInfo);
         }
 
@@ -62,17 +66,24 @@ namespace WebApi
             return base.OnDisconnectedAsync(exception);
         }
 
-        public List<PlayerInfo> GetPlayers()
+        public List<UserAppInfo> GetPlayers()
         {
             return GamesHubService.Players
                 .Where(v => UserService.IsOnline(v.Name))
                 .ToList();
         }
 
-        public PlayerInfo GetMe()
+        public UserAppInfo GetMe()
         {
             return GamesHubService.Players
                 .FirstOrDefault(v => v.Name == Context.UserIdentifier);
+        }
+
+        public string GetMyToken()
+        {
+            var users = UserService.GetAllUser();
+            var myUser = users.FirstOrDefault(v => v.Name == Context.UserIdentifier);
+            return myUser?.Token;
         }
 
         public List<StartGameInfo> GetGames()

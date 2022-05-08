@@ -10,7 +10,7 @@ namespace WebApi
     public class GamesHubService
     {
         public static List<StartGameInfo> GamesInfo { get; set; } = new();
-        public static List<PlayerInfo> Players { get; set; } = new();
+        public static List<UserAppInfo> Players { get; set; } = new();
 
         public readonly ConcurrentDictionary<string, GameInfo> Games = new();
         public readonly ConcurrentDictionary<IPlayer, string> PlayerNames = new();
@@ -35,7 +35,7 @@ namespace WebApi
                     UserService.MarkOnline(user.Name);
                 }
 
-                var playerInfo = new PlayerInfo() { Name = user.Name, Rate = (int)user.Rating, CreateGamePlayer = createBot };
+                var playerInfo = new UserAppInfo() { Name = user.Name, Rate = (int)user.Rating, CreateGamePlayer = createBot};
 
                 Players.Add(playerInfo);
             }
@@ -49,13 +49,20 @@ namespace WebApi
             public int TicksToEnd = 1000;
         }
 
+        public void AddPlayer(User user)
+        {
+            Func<IPlayer> createBot = () => new RemotePlayer();
+            var playerInfo = new UserAppInfo() { Name = user.Name, Rate = (int)user.Rating, CreateGamePlayer = createBot };
+            Players.Add(playerInfo);
+        }
+
         public void TryAddPlayer(string playerId)
         {
             var playerInfo = Players.FirstOrDefault(v => v.Name == playerId);
 
             if (playerInfo == null)
             {
-                playerInfo = new PlayerInfo() { Name = playerId };
+                playerInfo = new UserAppInfo() { Name = playerId };
                 Players.Add(playerInfo);
             }
         }
@@ -131,14 +138,41 @@ namespace WebApi
 
         public void StopGame(string gameId)
         {
-            if (Games.TryGetValue(gameId, out GameInfo game) == false)
+            if (Games.Remove(gameId, out GameInfo gameInfo) == false)
             {
                 return;
             }
+            gameInfo.timer.Stop();
             var startGameInfo = GamesInfo.FirstOrDefault(v => v.GameId == gameId);
             startGameInfo.MarkAsOver();
-            game.timer.Stop();
-            Games.Remove(gameId, out GameInfo gameInfo);
+
+            CalcAndSaveRatings(startGameInfo, gameInfo, gameId);
+        }
+
+        private void CalcAndSaveRatings(StartGameInfo startGameInfo, GameInfo gameInfo, string gameId)
+        {
+            var rateds = new Dictionary<IRated, UserAppInfo>();
+
+            foreach (var playerName in startGameInfo.Players)
+            {
+                var player = Players.FirstOrDefault(v => v.Name == playerName);
+                if (player == null)
+                    continue;
+                if (gameInfo.GameService.PlayersScores.TryGetValue(player.GetPlayerFromGame(gameId), out int score) == false)
+                    continue;
+
+                rateds[new RateOjbect(player.Rate, score)] = player;
+            }
+
+            var ratingService = new RatingService();
+            var dict = ratingService.Calc(rateds.Keys.ToArray());
+
+            foreach (var rating in dict)
+            {
+                rateds[rating.Key].Rate = (int)rating.Value;
+            }
+
+            UserService.SaveNewRating(rateds.Values.ToArray());
         }
     }
 }

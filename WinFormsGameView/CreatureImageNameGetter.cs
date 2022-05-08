@@ -1,14 +1,9 @@
-﻿using GameDigger;
-using SnakeGame2;
+﻿using SnakeGame2;
 
 namespace WinFormsGameView
 {
     public class CommonImageNameGetter
     {
-        public string Get(Terrain _) => "Terrain.png";
-        public string Get(Digger _) => "Digger.png";
-
-
         public string Get(SnakeGame2.HeadSnake _) => "HeadSnake.png";
         public string Get(SnakeGame2.BodySnake _) => "BodySnake.png";
         public string Get(SnakeGame2.Apple _) => "Apple.png";

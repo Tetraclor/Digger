@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -45,7 +46,6 @@ namespace WebApi
             
             app.UseRouting();
 
-           
             app.UseAuthentication();
             app.UseMiddleware<AnonymousSessionMiddleware>();
             app.UseAuthorization();
@@ -56,6 +56,7 @@ namespace WebApi
             {
                 endpoints.MapHub<GameHub>("/game");
                 endpoints.MapHub<MainHub>("/main");
+                endpoints.MapHub<BotsHub>("/bots");
             });
         }
     }
@@ -73,13 +74,27 @@ namespace WebApi
 
         public async Task InvokeAsync(HttpContext context)
         {
+            string userName;
+            if (context.Request.Headers.TryGetValue("bot_token", out StringValues values))
+            {
+                userName = UserService.GetOrNull(values.FirstOrDefault())?.Name;
+                if(userName == null)
+                {
+                    throw new Exception("Not found user with token");
+                }    
+            }
+            else
+            {
+                userName = GenerateAnonimousUserName();
+            }
+
             if (!context.User.Identity.IsAuthenticated)
             {
                 if (string.IsNullOrEmpty(context.User.FindFirstValue(ClaimTypes.Name)))
                 {
                     var claims = new List<Claim>
                     {
-                        new Claim(ClaimTypes.Name, GenerateAnonimousUserName())
+                        new Claim(ClaimTypes.Name, userName)
                     };
 
                     // создаем объект ClaimsIdentity
@@ -91,6 +106,8 @@ namespace WebApi
 
             await _next(context);
         }
+
+        
 
         private static Random random = new Random();
 

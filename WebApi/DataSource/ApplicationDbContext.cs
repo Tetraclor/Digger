@@ -15,7 +15,7 @@ namespace WebApi.DataSource
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             
-            optionsBuilder.UseSqlite("Filename=SnakeArena.sqlite");
+            optionsBuilder.UseSqlite("Filename=DataSource/SqLiteDb/SnakeArena.sqlite");
 
             //optionsBuilder.UseSqlite("server=localhost;user=root;password=кщще;database=userdb;",
             //    new MySqlServerVersion(new Version(8, 0, 28)));

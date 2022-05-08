@@ -7,7 +7,6 @@ namespace Common
 {
     public abstract class GameService
     {
-        public Game Game;
         public GameState GameState;
         public int CurrentTick { get; protected set; }
         public Dictionary<IPlayer, int> PlayersScores { get; protected set; } = new ();
@@ -16,7 +15,6 @@ namespace Common
         {
             var map = CreatureMapCreator.CreateMap(width, height, Assembly.GetAssembly(gameType));
             GameState = new GameState(map);
-            Game = new Game(GameState);
         }
 
         public GameService(string stringmap, Type gameType)
@@ -32,13 +30,10 @@ namespace Common
         {
             var map = CreatureMapCreator.CreateMap(stringmap, Assembly.GetAssembly(gameType));
             GameState = new GameState(map);
-            Game = new Game(GameState);
         }
 
         public virtual void MakeGameTick()
         {
-            Game.BeginAct();
-            Game.EndAct();
             CurrentTick++;
         }
 
@@ -47,10 +42,7 @@ namespace Common
             return CreatureMapCreator.MapToString(this.GameState.Map);
         }
 
-        public virtual List<CreatureTransformation> GetCreatureTransformations()
-        {
-            return Game.Transformations;
-        }
+        public abstract List<CreatureTransformation> GetCreatureTransformations();
 
         public virtual bool AddPlayer(IPlayer player) => PlayersScores.TryAdd(player, 0);
         public abstract bool RemovePlayer(IPlayer player);

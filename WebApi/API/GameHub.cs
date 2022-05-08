@@ -1,4 +1,5 @@
 ﻿using Common;
+using GameCore;
 using Microsoft.AspNetCore.SignalR;
 using System.Collections.Generic;
 using System.Linq;
@@ -54,6 +55,8 @@ namespace WebApi
         {
             public string Name { get; set; }
             public int Score { get; set; }
+            public Point SnakeHead { get; set; }
+            public List<Point> SnakeTail { get; set; } 
 
             public PlayerInfo()
             {
@@ -138,9 +141,23 @@ namespace WebApi
 
             List<PlayerInfo> GetPlayerInfos()
             {
+                var snakeGame = (SnakeGame2.SnakeGameService)gameService;
+
+                
+                var playerNameToSnake = snakeGame.SnakeSpawners
+                    .Where(v => v.IsActive)
+                    .ToDictionary(v =>  GetUserNameFromPlayer(v.Player), v => v.SpawnedSnake);
+
                 var playersScores = gameService.PlayersScores
                     .Select(v => new PlayerInfo(GetUserNameFromPlayer(v.Key), v.Value))
                     .ToList();
+
+                playersScores.ForEach(v =>
+                {
+                    var snake = playerNameToSnake[v.Name];
+                    v.SnakeHead = snake.Head;
+                    v.SnakeTail = snake.AllPoints;
+                });
 
                 return playersScores;
 

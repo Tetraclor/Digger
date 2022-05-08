@@ -105,32 +105,23 @@ namespace SnakeGame2
         }
     }
 
-    public class HeadSnake : Fict
+    public class HeadSnake : ICreature
     {
     }
 
-    public class BodySnake : Fict
+    public class BodySnake : ICreature
     {
     }
 
-    public class Apple : Fict
+    public class Apple : ICreature
     {
     }
 
-    public class Wall : Fict
+    public class Wall : ICreature
     {
     }
 
-    public class Spawn : Fict
+    public class Spawn : ICreature
     {
-    }
-
-    public abstract class Fict : ICreature
-    {
-        public CreatureCommand Act(GameState game, int x, int y) => null;
-
-        public bool DeadInConflict(ICreature conflictedObject) => false;
-
-        public int TransformPriority() => 1;
     }
 }

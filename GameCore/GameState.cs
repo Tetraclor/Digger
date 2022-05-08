@@ -9,8 +9,6 @@ namespace GameCore
     public class GameState
     {
         public readonly ICreature[,] Map;
-        public int Scores { get; set; }
-        public bool IsOver { get; set; }
 
         public int MapWidth { get; private set; }
         public int MapHeight { get; private set; }

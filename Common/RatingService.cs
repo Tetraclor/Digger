@@ -31,16 +31,12 @@ namespace Common
 
     public class RatingService
     {
-        public int K = 16;
+        public int K = 10;
 
-        public Dictionary<IRated, int> Calc(params IRated[] rated)
+        public Dictionary<IRated, double> Calc(params IRated[] rated)
         {
-            var maxScore = rated.Max(r => r.GameScore);
-            var minScore = rated.Min(r => r.GameScore);
-
             var matrix = new Dictionary<IRated, List<double>>();
             foreach (var rate in rated) matrix[rate] = new List<double>();
-
 
             for (int i = 0; i < rated.Length; i++)
             {
@@ -48,11 +44,10 @@ namespace Common
                 for (int j = i + 1; j < rated.Length; j++)
                 {
                     var second = rated[j];
-                    var f = Calc(first, second, minScore, maxScore);
-                    var s = Calc(second, first, minScore, maxScore);
+                    var f = Calc(first, second);
+                    var s = Calc(second, first);
                     matrix[first].Add(f);
                     matrix[second].Add(s);
-                    Console.WriteLine($"{first}->{f}----{second}->{s}");
                 }
             }
 
@@ -61,25 +56,27 @@ namespace Common
             return result;
         }
 
-        public int AggregateRate(List<double> rateds)
+        public static double AggregateRate(List<double> rateds)
         {
-            return (int)(rateds.Sum() / rateds.Count);
+            return (rateds.Sum() / rateds.Count);
         }
 
-        public double Calc(IRated rated, IRated opponent, int minScore, int maxScore)
+        public double Calc(IRated rated, IRated opponent)
         {
             var p = (opponent.Rate - rated.Rate) / 400.0;
             var Ea = 1.0 / (1 + Math.Pow(10, p));
 
-            var Sa = CalcSA(rated, minScore, maxScore);
+            var Sa = CalcSA(rated, opponent);
             var a = rated.Rate + K * (Sa - Ea);
 
             return a;
         }
 
-        public double CalcSA(IRated rated, int minScore, int maxScore)
+        public static double CalcSA(IRated rated, IRated opponent)
         {
-            return rated.GameScore / (double)(maxScore);
+            return rated.GameScore > opponent.GameScore ? 1 :
+                   rated.GameScore < opponent.GameScore ? 0 :
+                   0.5;
         }
     }
 }

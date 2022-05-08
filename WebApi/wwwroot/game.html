@@ -150,7 +150,8 @@
         
 
         function start_game() {
-            hubConnection.invoke("StartGame", params.game_id).then(v => set_game_info(v));
+            hubConnection.invoke("StartGame", params.game_id)
+                .then(v => set_game_info(v));
         }
 
         function set_game_info(game_info) {
