@@ -5,41 +5,40 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using WebApi.DataSource;
+using WebApi.Services;
 
 namespace WebApi
 {
     public class BotsHub : Hub
     {
-        public static List<User> JoinedBotUsers = new List<User>();
-        static ConcurrentDictionary<string, User> connectionIdToUser = new();
-        static ConcurrentDictionary<User, string> userToConnectionId = new();
-        private static IHubContext<BotsHub> botsHub;
-        private readonly GamesHubService gamesHubService;
+        static List<UserAppInfo> JoinedBotUsers = new();
+        static ConcurrentDictionary<string, UserAppInfo> connectionIdToUser = new();
+        static ConcurrentDictionary<UserAppInfo, string> userToConnectionId = new();
+        static IHubContext<BotsHub> botsHub;
 
-        public BotsHub(IHubContext<BotsHub> botsHub, GamesHubService gamesHubService)
+        public BotsHub(IHubContext<BotsHub> botsHub)
         {
             BotsHub.botsHub = botsHub;
-            this.gamesHubService = gamesHubService;
         }
 
         public override Task OnDisconnectedAsync(Exception exception)
         {
-            connectionIdToUser.TryRemove(Context.ConnectionId, out User user);
+            connectionIdToUser.TryRemove(Context.ConnectionId, out UserAppInfo user);
             userToConnectionId.TryRemove(user, out string _);
             JoinedBotUsers.Remove(user);
-            UserService.MarkOffline(user.Name);
+            UserService.MarkUserBotOffline(user.Name);
             return base.OnDisconnectedAsync(exception);
         }
 
         public void Join(string token)
         {
-            var user = UserService.GetOrNull(token);
+            var user = UserService.GetUserOrNull(token);
             if(user == null)
                 return;
             connectionIdToUser[Context.ConnectionId] = user;
             userToConnectionId[user] = Context.ConnectionId;
             JoinedBotUsers.Add(user);
-            UserService.MarkOnline(user.Name);
+            UserService.MarkUserBotOnline(user.Name);
         }
 
         public static void JoinConnectedBotsToGame(string[] userNames, string gameId)
@@ -54,7 +53,12 @@ namespace WebApi
             foreach (var user in connectedUsers)
             {
                 var connectionId = userToConnectionId[user];
-                botsHub.Clients.Client(connectionId).SendAsync("JoinToGame", gameId);
+                var countBotCopies = userNames.Count(v => v == user.Name);
+
+                for (int i = 0; i < countBotCopies; i++)
+                {
+                    botsHub.Clients.Client(connectionId).SendAsync("JoinToGame", gameId);
+                }
             }
         }
     }

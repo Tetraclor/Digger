@@ -13,6 +13,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using WebApi.DataSource;
+using WebApi.Services;
 
 namespace WebApi
 {
@@ -24,10 +25,11 @@ namespace WebApi
         {
             services.AddDbContext<ApplicationDbContext>(ServiceLifetime.Singleton);
 
+            services.AddSingleton(new GamesManagerService());
+
             services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
             services.AddControllers();
             services.AddSignalR();
-            services.AddSingleton<GamesHubService>();
 
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme);
@@ -77,7 +79,7 @@ namespace WebApi
             string userName;
             if (context.Request.Headers.TryGetValue("bot_token", out StringValues values))
             {
-                userName = UserService.GetOrNull(values.FirstOrDefault())?.Name;
+                userName = UserService.GetUserOrNull(values.FirstOrDefault())?.Name;
                 if(userName == null)
                 {
                     throw new Exception("Not found user with token");
@@ -106,8 +108,6 @@ namespace WebApi
 
             await _next(context);
         }
-
-        
 
         private static Random random = new Random();
 

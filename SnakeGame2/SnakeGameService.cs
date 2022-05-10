@@ -29,29 +29,6 @@ namespace SnakeGame2
             Init();
         }
 
-        public const string TestMapNoTorSpace = @"
-WWWWWWWWWWWWWWWWWWWWWW
-W         WW         W
-S         WW         S
-W         WW         W
-W                    W
-W    W          W    W
-W                    W
-W         WW         W
-W         WW         W
-W         WW         W
-WWW     WWWWWW     WWW
-W         WW         W
-W         WW         W
-W         WW         W
-W                    W
-W    W          W    W
-W                    W
-W         WW         W
-S         WW         S
-W         WW         W
-WWWWWWWWWWWWWWWWWWWWWW
-";
         public const string TestMap = @"
 WWWWW WWWWWWWWWW WWWWW
 W         WW         W

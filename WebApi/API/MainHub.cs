@@ -8,93 +8,55 @@ using System.IO;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using WebApi.DataSource;
+using WebApi.Services;
 
 namespace WebApi
 {
     public class MainHub : Hub
     {
-        public static List<MapInfo> Maps = new();
-
-        public class MapInfo
-        {
-            public string Name { get; set; }
-            public string Map { get; set; }
-            public int ApplesCount { get; set; }
-        }
-
-        static MainHub()
-        {
-            foreach (var path in Directory.GetFiles("wwwroot/SnakeMaps/"))
-            {
-                var filename = Path.GetFileName(path);
-                var map = File.ReadAllText(path);
-                var mapInfo = new MapInfo() { Name = filename, Map = map };
-                Maps.Add(mapInfo);
-            }
-        }
-
-        public GamesHubService GamesHub { get; }
-        public HttpContext HttpContext { get; }
-
-
-
-        public MainHub(GamesHubService gamesHub)
-        {
-            GamesHub = gamesHub;
-            //HttpContext = httpContext;
-        }
-
         public void StartGame(StartGameInfo startGameInfo)
         {
-            BotsHub.JoinConnectedBotsToGame(startGameInfo.Players, startGameInfo.GameId);
-
-            GamesHubService.GamesInfo.Add(startGameInfo);
+            GamesManagerService.StartGamesInfo.Add(startGameInfo);
         }
 
         public override Task OnConnectedAsync()
         {
-            GamesHub.TryAddPlayer(Context.UserIdentifier);
-            UserService.MarkOnline(Context.UserIdentifier);
+            UserService.MarkUserOnline(Context.UserIdentifier);
             return base.OnConnectedAsync();
         }
 
         public override Task OnDisconnectedAsync(Exception exception)
         {
-            //  GamesHub.RemovePlayer(Context.UserIdentifier);
-            UserService.MarkOffline(Context.UserIdentifier);
+            UserService.MarkUserOffline(Context.UserIdentifier);
             return base.OnDisconnectedAsync(exception);
         }
 
         public List<UserAppInfo> GetPlayers()
         {
-            return GamesHubService.Players
-                .Where(v => UserService.IsOnline(v.Name))
+            return UserService.Users
+                .Where(v => v.IsBotOnline || v.IsUserOnline)
                 .ToList();
         }
 
         public UserAppInfo GetMe()
         {
-            return GamesHubService.Players
+            return UserService.Users
                 .FirstOrDefault(v => v.Name == Context.UserIdentifier);
         }
 
         public string GetMyToken()
         {
-            var users = UserService.GetAllUser();
-            var myUser = users.FirstOrDefault(v => v.Name == Context.UserIdentifier);
-            return myUser?.Token;
+            return UserService.GetToken(Context.UserIdentifier);
         }
 
         public List<StartGameInfo> GetGames()
         {
-            return GamesHubService.GamesInfo;
+            return GamesManagerService.StartGamesInfo;
         }
 
-        public List<MapInfo> GetMaps()
+        public List<MapService.MapInfo> GetMaps()
         {
-            Maps.ForEach(v => v.Map = v.Map.Replace("\r", "").Trim());
-            return Maps;
+            return MapService.Maps;
         }
 
         public AnimationInfo GetAnimateInfo()

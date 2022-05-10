@@ -40,29 +40,36 @@ namespace SnakeBotClient
         public async Task StartAsync()
         {
             await connection.StartAsync();
+            Console.WriteLine("Соединение установлено");
             await connection.SendAsync("Join", token);
+            Console.WriteLine("Бот успешно подключен");
         }
 
         async Task JoinToGameAsync(string gameId)
         {
+            Console.WriteLine($"Бот вызван на дуэль {ServerUrl}.html/game?game_id={gameId}");
+
             var gameConnection = new HubConnectionBuilder()
-                .WithUrl($"{ServerUrl}/game")
+                .WithUrl($"{ServerUrl}/game", opt => {
+                    opt.Headers.Add("bot_token", token);
+                })
                 .Build();
 
             var player = createPlayer();
 
             gameConnection.On<string, int, List<PlayerInfo>>(OnMethodName, Tick);
             await gameConnection.StartAsync();
+            Console.Write($"Соединение с игрой {gameId} установлено. ");
             await gameConnection.SendAsync("StartGame", gameId);
+            Console.WriteLine($"Бот успешно присоединился к игре {gameId}");
 
             async void Tick(string map, int tick, List<PlayerInfo> playerInfos)
             {
                 var gameState = new GameState(map, playerInfos);
-                var command = Enum.GetName<FourDirMove>(((PlayerCommand)player.GetCommand(gameState)).Move);
+                var command = Enum.GetName(((PlayerCommand)player.GetCommand(gameState)).Move);
                 await gameConnection.SendAsync(SendMethodName, command);
             }
         }
-
 
         class GameState : ISnakeGameStateForPlayer
         {

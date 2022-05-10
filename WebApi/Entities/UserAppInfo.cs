@@ -9,25 +9,48 @@ namespace WebApi
     {
         public string Name { get; set; }
         public int Rate { get; set; } = 1500;
+        public bool IsUserOnline { get; set; } = false;
+        public bool IsBotOnline { get; set; } = false;
 
         public Func<IPlayer> CreateGamePlayer = () => new RemotePlayer();
         public List<UserPlayerConnection> UserPlayerConnections = new();
 
-        public IPlayer JoinGame(string gameId)
+        public IPlayer RegisterPlayer(string gameId)
         {
-            var player = CreateGamePlayer();
             var userPlayerConnection = new UserPlayerConnection()
             {
-                Player = player,
+                ConnectionId = null,
+                Player = CreateGamePlayer(),
                 GameId = gameId,
             };
             UserPlayerConnections.Add(userPlayerConnection);
-            return player;
+            return userPlayerConnection.Player;
         }
 
-        public IPlayer GetPlayerFromGame(string gameId)
+        public IPlayer JoinGame(string conectionId, string gameId)
         {
-            return UserPlayerConnections.FirstOrDefault(v => v.GameId == gameId).Player;
+            var connected = UserPlayerConnections
+                .FirstOrDefault(x => x.GameId == gameId && x.IsConnected == false);
+
+            var userPlayerConnection = new UserPlayerConnection()
+            {
+                ConnectionId = conectionId ?? "IsServerBot", // Если connectionId значит подключается бот со стороны сервера
+                Player = connected.Player,
+                GameId = gameId,
+            };
+
+            UserPlayerConnections.Remove(connected);
+            UserPlayerConnections.Add(userPlayerConnection);
+
+            return userPlayerConnection.Player;
+        }
+
+        public List<IPlayer> GetPlayersFromGame(string gameId)
+        {
+            return UserPlayerConnections
+                .Where(v => v.GameId == gameId)
+                .Select(v => v.Player)
+                .ToList();
         }
 
         public int ExcludeFromGame(string gameId)
@@ -41,5 +64,7 @@ namespace WebApi
         public string GameId { get; set; }
         public IPlayer Player { get; set; }
         public string ConnectionId { get; set; }
+
+        public bool IsConnected => ConnectionId != null;
     }
 }

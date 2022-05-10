@@ -49,6 +49,7 @@ namespace Common
                     matrix[first].Add(f);
                     matrix[second].Add(s);
                 }
+                ;
             }
 
             var result = matrix.ToDictionary(v => v.Key, v => AggregateRate(v.Value));

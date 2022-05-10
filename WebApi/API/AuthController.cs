@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using WebApi.DataSource;
+using WebApi.Services;
 
 namespace WebApi.API
 {
@@ -17,7 +17,7 @@ namespace WebApi.API
         {
             if(login == null) return this.BadRequest("Логин не должен быть пустой");
 
-            var user = UserService.GetOrNull(login, password);
+            var user = UserService.AuthUser(login, password);
             if (user == null) return this.BadRequest("Логини или пароль неверные");
             
             await Auth(login, password);

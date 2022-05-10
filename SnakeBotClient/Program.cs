@@ -14,7 +14,7 @@ namespace SnakeBotClient
     {
         static void Main(string[] args)
         {
-            var accessToken = "lkj0Mro12k2510HdnqUU+w==";
+            var accessToken = "jeI2aTtEQkq8dPHJTK0TpA==";
             var client = new ClientSignalR(accessToken, () => new RandomBotPlayer(42));
             client.StartAsync().Wait();
             Thread.Sleep(10000000);
