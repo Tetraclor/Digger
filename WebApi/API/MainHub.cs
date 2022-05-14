@@ -14,9 +14,9 @@ namespace WebApi
 {
     public class MainHub : Hub
     {
-        public void StartGame(StartGameInfo startGameInfo)
+        public void StartGame(GameStartInfo startGameInfo)
         {
-            GamesManagerService.StartGamesInfo.Add(startGameInfo);
+            GamesManagerService.CreateGame(startGameInfo);
         }
 
         public override Task OnConnectedAsync()
@@ -49,9 +49,11 @@ namespace WebApi
             return UserService.GetToken(Context.UserIdentifier);
         }
 
-        public List<StartGameInfo> GetGames()
+        public List<GameStartInfo> GetGames()
         {
-            return GamesManagerService.StartGamesInfo;
+            return GamesManagerService.GetAllGames()
+                .Select(v => v.StartGameInfo)
+                .ToList();
         }
 
         public List<MapService.MapInfo> GetMaps()

@@ -62,7 +62,7 @@ namespace Common
             return (rateds.Sum() / rateds.Count);
         }
 
-        public double Calc(IRated rated, IRated opponent)
+        private double Calc(IRated rated, IRated opponent)
         {
             var p = (opponent.Rate - rated.Rate) / 400.0;
             var Ea = 1.0 / (1 + Math.Pow(10, p));

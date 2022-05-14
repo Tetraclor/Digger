@@ -1,6 +1,6 @@
 ﻿namespace WebApi
 {
-    public class StartGameInfo
+    public class GameStartInfo
     {
         public string GameId { get; set; }
         public string MapName { get; set; }

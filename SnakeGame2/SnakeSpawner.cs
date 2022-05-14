@@ -48,6 +48,7 @@ namespace SnakeGame2
 
                 var freePoint = freePoints.First();
                 SpawnedSnake = new Snake(freePoint);
+                SpawnedSnake.PrevMove = Point.ToDir(freePoint);
                 InProgress = true;
 
                 return true;

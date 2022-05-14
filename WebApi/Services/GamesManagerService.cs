@@ -4,6 +4,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Timers;
 
 namespace WebApi.Services
 {
@@ -26,16 +27,16 @@ namespace WebApi.Services
             }
         }
 
-        public class GameInfo
+        public class GameProccesInfo
         {
+            public GameStartInfo StartGameInfo { get; set; }
             public GameService GameService { get; set; }
-            public System.Timers.Timer timer = new System.Timers.Timer();
+            public Timer timer = new();
             public int GameTickMs = 300;
             public int TicksToEnd = 1000;
         }
 
-        public static List<StartGameInfo> StartGamesInfo { get; set; } = new();
-        static readonly ConcurrentDictionary<string, GameInfo> Games = new();
+        static readonly ConcurrentDictionary<string, GameProccesInfo> Games = new();
         static readonly ConcurrentDictionary<IPlayer, string> PlayerNames = new();
 
         public GamesManagerService()
@@ -48,9 +49,19 @@ namespace WebApi.Services
             UserService.MarkUserBotOnline(randombotUser.Name);
         }
 
+        public static GameProccesInfo GetGame(string gameId)
+        {
+            return Games.GetValueOrDefault(gameId);
+        }
+
+        public static List<GameProccesInfo> GetAllGames()
+        {
+            return Games.Values.ToList();
+        }
+
         public static List<PlayerInfo> GetPlayerInfos(string gameId)
         {
-            if (Games.TryGetValue(gameId, out GameInfo gameInfo) == false)
+            if (Games.TryGetValue(gameId, out GameProccesInfo gameInfo) == false)
             {
                 return null;
             }
@@ -79,7 +90,7 @@ namespace WebApi.Services
             };
         }
 
-        public static void JoinGame(string connectionId, UserAppInfo userApp, StartGameInfo startGameInfo)
+        public static void JoinGame(string connectionId, UserAppInfo userApp, GameStartInfo startGameInfo)
         {
             if (startGameInfo.Players.Contains(userApp.Name) == false)
                 return;
@@ -87,7 +98,7 @@ namespace WebApi.Services
             userApp.JoinGame(connectionId, startGameInfo.GameId);
         }
 
-        public static bool CreateGame(StartGameInfo startGameInfo)
+        public static bool CreateGame(GameStartInfo startGameInfo)
         {
             if (startGameInfo == null)
             {
@@ -99,8 +110,6 @@ namespace WebApi.Services
                 return false;
             }
 
-            startGameInfo.MarkAsInProgress();
-
             var snakeGame = new AnimateSnakeGameService
             (
                 (gameService) => null,
@@ -109,9 +118,10 @@ namespace WebApi.Services
 
             snakeGame.ApplesManager.SetMaxApplesCount(startGameInfo.ApplesCount);
 
-            var gameInfo = new GameInfo();
+            var gameInfo = new GameProccesInfo();
             gameInfo.GameService = snakeGame;
             gameInfo.TicksToEnd = startGameInfo.TicksToEnd;
+            gameInfo.StartGameInfo = startGameInfo;
             Games[startGameInfo.GameId] = gameInfo;
 
             foreach(var userName in startGameInfo.Players)
@@ -119,9 +129,10 @@ namespace WebApi.Services
                 var userApp = UserService.GetUserOrNull(userName);
                 if (userApp == null)
                     continue;
+
                 var player = userApp.RegisterPlayer(startGameInfo.GameId);
-                PlayerNames[player] = userName;
                 snakeGame.AddPlayer(player);
+                PlayerNames[player] = userName;
             }
 
             return true;
@@ -129,14 +140,16 @@ namespace WebApi.Services
 
         public static void StartGame(string gameId, Action<string, GameService> GameTick)
         {
-            if (Games.TryGetValue(gameId, out GameInfo gameInfo) == false)
+            if (Games.TryGetValue(gameId, out GameProccesInfo gameProccesInfo) == false)
             {
                 return;
             }
 
-            var timer = gameInfo.timer;
-            var gameService = gameInfo.GameService;
-            var ticksToEnd = gameInfo.TicksToEnd;
+            gameProccesInfo.StartGameInfo.MarkAsInProgress();
+
+            var timer = gameProccesInfo.timer;
+            var gameService = gameProccesInfo.GameService;
+            var ticksToEnd = gameProccesInfo.TicksToEnd;
 
             timer.Elapsed += (o, e) =>
             {
@@ -146,10 +159,8 @@ namespace WebApi.Services
                     StopGame(gameId);
             };
 
-            timer.Interval = gameInfo.GameTickMs;
+            timer.Interval = gameProccesInfo.GameTickMs;
             timer.Enabled = true;
-
-
             timer.Start();
 
             GameTick(gameId, gameService);
@@ -157,18 +168,17 @@ namespace WebApi.Services
 
         public static void StopGame(string gameId)
         {
-            if (Games.Remove(gameId, out GameInfo gameInfo) == false)
+            if (Games.Remove(gameId, out GameProccesInfo gameInfo) == false)
             {
                 return;
             }
             gameInfo.timer.Stop();
-            var startGameInfo = StartGamesInfo.FirstOrDefault(v => v.GameId == gameId);
-            startGameInfo.MarkAsOver();
+            gameInfo.StartGameInfo.MarkAsOver();
 
-            CalcAndSaveRatings(startGameInfo, gameInfo, gameId);
+            CalcAndSaveRatings(gameInfo.StartGameInfo, gameInfo, gameId);
         }
 
-        private static void CalcAndSaveRatings(StartGameInfo startGameInfo, GameInfo gameInfo, string gameId)
+        private static void CalcAndSaveRatings(GameStartInfo startGameInfo, GameProccesInfo gameInfo, string gameId)
         {
             if (startGameInfo.Players.Length < 2)
                 return;

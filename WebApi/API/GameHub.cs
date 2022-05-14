@@ -53,9 +53,9 @@ namespace WebApi
             return base.OnDisconnectedAsync(exception);
         }
 
-        public StartGameInfo StartGame(string gameId)
+        public GameStartInfo StartGame(string gameId)
         {
-            var startGameInfo = GamesManagerService.StartGamesInfo.FirstOrDefault(v => v.GameId == gameId);
+            var startGameInfo = GamesManagerService.GetGame(gameId).StartGameInfo;
 
             if (startGameInfo == null)
             {
@@ -67,10 +67,9 @@ namespace WebApi
 
             if (startGameInfo.IsNotStarted)
             {
-                GamesManagerService.CreateGame(startGameInfo);
                 BotsHub.JoinConnectedBotsToGame(startGameInfo.Players, startGameInfo.GameId);
                 GamesManagerService.StartGame(gameId, GameTick);
-            }
+            } 
 
             if (startGameInfo.Players.Contains(Context.UserIdentifier))
             {

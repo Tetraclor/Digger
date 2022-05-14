@@ -22,6 +22,19 @@ namespace SnakeTests
         }
 
         [Test]
+        public void NegativeRating()
+        {
+            var ratingService = new RatingService();
+
+            var a1 = new RateOjbect(-10, 1000);
+            var a2 = new RateOjbect(-100, 100);
+
+            var dict = ratingService.Calc(a1, a2);
+
+            ;
+        }
+
+        [Test]
         public void RatingTestTwo()
         {
             var ratingService = new RatingService();

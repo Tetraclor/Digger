@@ -3,11 +3,9 @@ using GameCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SnakeGame2
-{ 
+{
     public class Snake : IMapAble
     {
         public List<Point> AllPoints => new List<Point> { Head }.Concat(Body).ToList();
@@ -47,7 +45,7 @@ namespace SnakeGame2
             Body.Clear();
         }
 
-        private FourDirMove PrevMove = FourDirMove.Right;
+        public FourDirMove PrevMove = FourDirMove.Right;
 
         public void Move(FourDirMove move, GameState gameState)
         {
@@ -78,19 +76,6 @@ namespace SnakeGame2
 
             Head = target;
             PrevMove = move;
-        }
-
-        public IEnumerable<CreatureTransformation> ToTransformation()
-        {
-            var prevHead = Body.Last();
-            yield return new CreatureTransformation(new HeadSnake(), prevHead, Head);
-
-            var prev = PrevLastTailPosition;
-            foreach (var item in Body)
-            {
-                yield return new CreatureTransformation(new BodySnake(), prev, item);
-                prev = item;
-            }
         }
 
         public void SetToMap(Action<Point, ICreature> set)

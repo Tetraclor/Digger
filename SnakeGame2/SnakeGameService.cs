@@ -238,4 +238,37 @@ WWWWW WWWWWWWWWW WWWWW
             return true;
         }
     }
+
+    /// <summary>
+    /// Состояние игры в виде объектов, общее для всех игроков
+    /// </summary>
+    public class SnakeGameStateDto
+    {
+        // Общая информация
+        public int Tick { get; set; }
+        public int EndTick { get; set; }
+        public int Width { get; set; }
+        public int Height { get; set; }
+
+        // Игровая информация
+        // Змейки, спавнеры, стены, яблоки
+        public List<Point> ApplesPositions { get; set; }
+        public List<Point> WallsPositions { get; set; }
+        public List<Point> SpawnersPositions { get; set; }     
+        public List<SnakeDto> Snakes { get; set; }
+
+        public class SnakeDto
+        {
+            public PlayerDto PlayerOwner { get; set; }
+            public Point HeadPosition { get; set; }
+            public List<Point> BodyPositions { get; set; }
+        }
+
+        public class PlayerDto
+        {
+            public string Name { get; set; }
+            public int Score { get; set; }
+            public Point SpawnerPosition { get; set; }
+        }
+    }
 }
