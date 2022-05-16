@@ -302,12 +302,13 @@
 
             var ticksToEnd = parseInt($('#ticks-to-end')[0].value);
             var applesCount = parseInt($('#apples-count')[0].value);
+            console.log(players);
 
             return hubConnection.invoke("StartGame", {
                 mapName: get_choised_mapinfo().name,
                 gameId: gameId,
                 applesCount: applesCount,
-                players: players,
+                userNames: players,
                 ticksToEnd: ticksToEnd
 
             }).then(() => {
@@ -341,11 +342,13 @@
             for (var i = 0; i < games.length; i++) {
                 var row = table.insertRow();
                 var info = games[i];
+                var startGameInfo = info.startGameInfo;
+                console.log(info);
                 row.innerHTML = `<td>Snake</td >
-                        <td>${info.mapName}</td>
-                        <td>${info.players}</td>
+                        <td>${startGameInfo.mapName}</td>
+                        <td>${startGameInfo.players}</td>
                         <td>${get_game_state(info)}</td>
-                        <td><a href="game.html?game_id=${info.gameId}">Смотреть</a></td>`;
+                        <td><a href="game.html?game_id=${startGameInfo.gameId}">Смотреть</a></td>`;
             }
 
             console.log(games);

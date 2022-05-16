@@ -41,23 +41,12 @@ namespace WebApi
             return true;
         }
 
-        public override Task OnConnectedAsync()
-        {
-          //  UserService.MarkUserOnline(Context.UserIdentifier); // Как-то определить бот это или человек
-            return base.OnConnectedAsync();
-        }
-
-        public override Task OnDisconnectedAsync(System.Exception exception)
-        {
-          //  UserService.MarkUserOffline(Context.UserIdentifier);
-            return base.OnDisconnectedAsync(exception);
-        }
-
         public GameStartInfo StartGame(string gameId)
         {
-            var startGameInfo = GamesManagerService.GetGame(gameId).StartGameInfo;
+            var gameInfo = GamesManagerService.GetGame(gameId);
+            var startGameInfo = gameInfo?.StartGameInfo;
 
-            if (startGameInfo == null)
+            if (gameInfo == null)
             {
                 Clients.Caller.SendAsync("ShowMessage", $"Игры с таким id={gameId} не найдено");
                 return null;
@@ -65,18 +54,15 @@ namespace WebApi
 
             Groups.AddToGroupAsync(Context.ConnectionId, gameId);
 
-            if (startGameInfo.IsNotStarted)
-            {
-                BotsHub.JoinConnectedBotsToGame(startGameInfo.Players, startGameInfo.GameId);
-                GamesManagerService.StartGame(gameId, GameTick);
-            } 
-
-            if (startGameInfo.Players.Contains(Context.UserIdentifier))
-            {
-                GamesManagerService.JoinGame(Context.ConnectionId, UserService.GetUserOrNull(Context.UserIdentifier), startGameInfo);
-            }    
+            GamesManagerService.StartGame(gameId, GameTick);
+            JoinToGame(gameId);
 
             return startGameInfo;
+        }
+
+        public void JoinToGame(string gameId)
+        {
+            GamesManagerService.JoinGame(gameId, Context.ConnectionId, Context.UserIdentifier);
         }
 
         public void StopGame(string gameId)

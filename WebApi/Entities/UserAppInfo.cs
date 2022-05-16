@@ -14,49 +14,6 @@ namespace WebApi
 
         public Func<IPlayer> CreateGamePlayer = () => new RemotePlayer();
         public List<UserPlayerConnection> UserPlayerConnections = new();
-
-        public IPlayer RegisterPlayer(string gameId)
-        {
-            var userPlayerConnection = new UserPlayerConnection()
-            {
-                ConnectionId = null,
-                Player = CreateGamePlayer(),
-                GameId = gameId,
-            };
-            UserPlayerConnections.Add(userPlayerConnection);
-            return userPlayerConnection.Player;
-        }
-
-        public IPlayer JoinGame(string conectionId, string gameId)
-        {
-            var connected = UserPlayerConnections
-                .FirstOrDefault(x => x.GameId == gameId && x.IsConnected == false);
-
-            var userPlayerConnection = new UserPlayerConnection()
-            {
-                ConnectionId = conectionId ?? "IsServerBot", // Если connectionId значит подключается бот со стороны сервера
-                Player = connected.Player,
-                GameId = gameId,
-            };
-
-            UserPlayerConnections.Remove(connected);
-            UserPlayerConnections.Add(userPlayerConnection);
-
-            return userPlayerConnection.Player;
-        }
-
-        public List<IPlayer> GetPlayersFromGame(string gameId)
-        {
-            return UserPlayerConnections
-                .Where(v => v.GameId == gameId)
-                .Select(v => v.Player)
-                .ToList();
-        }
-
-        public int ExcludeFromGame(string gameId)
-        {
-            return UserPlayerConnections.RemoveAll(v => v.GameId == gameId);
-        }
     }
 
     public class UserPlayerConnection

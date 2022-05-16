@@ -30,10 +30,16 @@ namespace WebApi.Services
         public class GameProccesInfo
         {
             public GameStartInfo StartGameInfo { get; set; }
-            public GameService GameService { get; set; }
+            public int GameTickMs { get; set; } = 300;
+            public bool IsOver { get; private set; } = false;
+            public bool IsInProgress { get; private set; } = false;
+            public bool IsNotStarted => !IsOver && !IsInProgress;
+
             public Timer timer = new();
-            public int GameTickMs = 300;
-            public int TicksToEnd = 1000;
+            public GameService GameService;
+
+            public void MarkAsOver() { IsOver = true; IsInProgress = false; }
+            public void MarkAsInProgress() { IsInProgress = true; }
         }
 
         static readonly ConcurrentDictionary<string, GameProccesInfo> Games = new();
@@ -90,12 +96,39 @@ namespace WebApi.Services
             };
         }
 
-        public static void JoinGame(string connectionId, UserAppInfo userApp, GameStartInfo startGameInfo)
+        private static IPlayer RegisterPlayerToGame(UserAppInfo userApp, string gameId)
         {
-            if (startGameInfo.Players.Contains(userApp.Name) == false)
+            var userPlayerConnection = new UserPlayerConnection()
+            {
+                ConnectionId = null,
+                Player = userApp.CreateGamePlayer(),
+                GameId = gameId,
+            };
+            userApp.UserPlayerConnections.Add(userPlayerConnection);
+            return userPlayerConnection.Player;
+        }
+
+
+        public static void JoinGame(string gameId, string connectionId, string userName)
+        {
+            var startGameInfo = Games.GetValueOrDefault(gameId)?.StartGameInfo;
+
+            if (startGameInfo == null || startGameInfo.UserNames.Contains(userName) == false)
                 return;
 
-            userApp.JoinGame(connectionId, startGameInfo.GameId);
+            var userPlayerConnections = UserService.GetUserOrNull(userName).UserPlayerConnections;
+            var connected = userPlayerConnections
+                .FirstOrDefault(x => x.GameId == gameId && x.IsConnected == false);
+
+            var userPlayerConnection = new UserPlayerConnection()
+            {
+                ConnectionId = connectionId ?? "IsServerBot", // Если connectionId значит подключается бот со стороны сервера
+                Player = connected.Player,
+                GameId = gameId,
+            };
+
+            userPlayerConnections.Remove(connected);
+            userPlayerConnections.Add(userPlayerConnection);
         }
 
         public static bool CreateGame(GameStartInfo startGameInfo)
@@ -105,32 +138,25 @@ namespace WebApi.Services
                 return false;
             }
 
-            if(startGameInfo.IsNotStarted == false)
-            {
-                return false;
-            }
-
             var snakeGame = new AnimateSnakeGameService
             (
                 (gameService) => null,
+                startGameInfo.ApplesCount,
                 MapService.GetMap(startGameInfo.MapName).Map
             );
 
-            snakeGame.ApplesManager.SetMaxApplesCount(startGameInfo.ApplesCount);
-
             var gameInfo = new GameProccesInfo();
             gameInfo.GameService = snakeGame;
-            gameInfo.TicksToEnd = startGameInfo.TicksToEnd;
             gameInfo.StartGameInfo = startGameInfo;
             Games[startGameInfo.GameId] = gameInfo;
 
-            foreach(var userName in startGameInfo.Players)
+            foreach(var userName in startGameInfo.UserNames)
             {
                 var userApp = UserService.GetUserOrNull(userName);
                 if (userApp == null)
                     continue;
 
-                var player = userApp.RegisterPlayer(startGameInfo.GameId);
+                var player = RegisterPlayerToGame(userApp, startGameInfo.GameId);
                 snakeGame.AddPlayer(player);
                 PlayerNames[player] = userName;
             }
@@ -145,11 +171,17 @@ namespace WebApi.Services
                 return;
             }
 
-            gameProccesInfo.StartGameInfo.MarkAsInProgress();
+            if(gameProccesInfo.IsNotStarted == false)
+            {
+                return;
+            }
+
+            gameProccesInfo.MarkAsInProgress();
+            BotsHub.JoinConnectedBotsToGame(gameProccesInfo.StartGameInfo.UserNames, gameId);
 
             var timer = gameProccesInfo.timer;
             var gameService = gameProccesInfo.GameService;
-            var ticksToEnd = gameProccesInfo.TicksToEnd;
+            var ticksToEnd = gameProccesInfo.StartGameInfo.TicksToEnd;
 
             timer.Elapsed += (o, e) =>
             {
@@ -172,25 +204,26 @@ namespace WebApi.Services
             {
                 return;
             }
+
             gameInfo.timer.Stop();
-            gameInfo.StartGameInfo.MarkAsOver();
+            gameInfo.MarkAsOver();
 
             CalcAndSaveRatings(gameInfo.StartGameInfo, gameInfo, gameId);
         }
 
         private static void CalcAndSaveRatings(GameStartInfo startGameInfo, GameProccesInfo gameInfo, string gameId)
         {
-            if (startGameInfo.Players.Length < 2)
+            if (startGameInfo.UserNames.Length < 2)
                 return;
 
             var rateds = new Dictionary<IRated, UserAppInfo>();
 
-            foreach (var playerName in startGameInfo.Players)
+            foreach (var playerName in startGameInfo.UserNames)
             {
                 var userApp = UserService.GetUserOrNull(playerName);
                 if (userApp == null)
                     continue;
-                var player = userApp.GetPlayersFromGame(gameId).FirstOrDefault();
+                var player = GetPlayersFromGame(userApp, gameId).FirstOrDefault();
                 if (gameInfo.GameService.PlayersScores.TryGetValue(player, out int score) == false)
                     continue;
 
@@ -206,6 +239,14 @@ namespace WebApi.Services
             }
 
             UserService.SaveNewRating(rateds.Values.ToArray());
+        }
+
+        private static List<IPlayer> GetPlayersFromGame(UserAppInfo userApp, string gameId)
+        {
+            return userApp.UserPlayerConnections
+                .Where(v => v.GameId == gameId)
+                .Select(v => v.Player)
+                .ToList();
         }
     }
 }

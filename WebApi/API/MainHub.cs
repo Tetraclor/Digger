@@ -40,8 +40,7 @@ namespace WebApi
 
         public UserAppInfo GetMe()
         {
-            return UserService.Users
-                .FirstOrDefault(v => v.Name == Context.UserIdentifier);
+            return UserService.GetUserOrNull(Context.UserIdentifier);
         }
 
         public string GetMyToken()
@@ -49,11 +48,9 @@ namespace WebApi
             return UserService.GetToken(Context.UserIdentifier);
         }
 
-        public List<GameStartInfo> GetGames()
+        public List<GamesManagerService.GameProccesInfo> GetGames()
         {
-            return GamesManagerService.GetAllGames()
-                .Select(v => v.StartGameInfo)
-                .ToList();
+            return GamesManagerService.GetAllGames();
         }
 
         public List<MapService.MapInfo> GetMaps()

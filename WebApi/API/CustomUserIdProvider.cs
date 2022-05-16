@@ -8,7 +8,7 @@ namespace WebApi
         public virtual string GetUserId(HubConnectionContext connection)
         {
             return connection.User.FindFirst(ClaimTypes.Name).Value;
-            return connection.ConnectionId; // Для тестирования
+            // return connection.ConnectionId; // Для тестирования
             // или так
             //return connection.User?.FindFirst(ClaimTypes.Name)?.Value;
         }

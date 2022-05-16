@@ -166,9 +166,7 @@
             }
 
             document.getElementById('game-state').innerText = get_game_state(game_info);
-            
         }
-
 
         function stop_game() {
             hubConnection.invoke("StopGame", params.game_id);

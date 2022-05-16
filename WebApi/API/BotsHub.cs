@@ -12,8 +12,8 @@ namespace WebApi
     public class BotsHub : Hub
     {
         static List<UserAppInfo> JoinedBotUsers = new();
-        static ConcurrentDictionary<string, UserAppInfo> connectionIdToUser = new();
-        static ConcurrentDictionary<UserAppInfo, string> userToConnectionId = new();
+        static ConcurrentDictionary<string, UserAppInfo> connectionIdToBot = new();
+        static ConcurrentDictionary<UserAppInfo, string> botToConnectionId = new();
         static IHubContext<BotsHub> botsHub;
 
         public BotsHub(IHubContext<BotsHub> botsHub)
@@ -23,8 +23,8 @@ namespace WebApi
 
         public override Task OnDisconnectedAsync(Exception exception)
         {
-            connectionIdToUser.TryRemove(Context.ConnectionId, out UserAppInfo user);
-            userToConnectionId.TryRemove(user, out string _);
+            connectionIdToBot.TryRemove(Context.ConnectionId, out UserAppInfo user);
+            botToConnectionId.TryRemove(user, out string _);
             JoinedBotUsers.Remove(user);
             UserService.MarkUserBotOffline(user.Name);
             return base.OnDisconnectedAsync(exception);
@@ -35,24 +35,24 @@ namespace WebApi
             var user = UserService.GetUserOrNull(token);
             if(user == null)
                 return;
-            connectionIdToUser[Context.ConnectionId] = user;
-            userToConnectionId[user] = Context.ConnectionId;
+            connectionIdToBot[Context.ConnectionId] = user;
+            botToConnectionId[user] = Context.ConnectionId;
             JoinedBotUsers.Add(user);
             UserService.MarkUserBotOnline(user.Name);
         }
 
         public static void JoinConnectedBotsToGame(string[] userNames, string gameId)
         {
-            var connectedUsers = JoinedBotUsers
+            var connectedBots = JoinedBotUsers
                 .Where(v => userNames.Contains(v.Name))
                 .ToList();
 
-            if (connectedUsers.Count == 0)
+            if (connectedBots.Count == 0)
                 return;
 
-            foreach (var user in connectedUsers)
+            foreach (var user in connectedBots)
             {
-                var connectionId = userToConnectionId[user];
+                var connectionId = botToConnectionId[user];
                 var countBotCopies = userNames.Count(v => v == user.Name);
 
                 for (int i = 0; i < countBotCopies; i++)

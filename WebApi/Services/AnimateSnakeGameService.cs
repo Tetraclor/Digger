@@ -44,7 +44,7 @@ namespace WebApi
             }
         }
 
-        public AnimateSnakeGameService(Func<SnakeGameService, Snake> getUserSnake, string mapString) : base(mapString)
+        public AnimateSnakeGameService(Func<SnakeGameService, Snake> getUserSnake, int applesCount, string mapString) : base(applesCount, mapString)
         {
             GetUserSnake = getUserSnake;
         }

@@ -9,9 +9,8 @@ FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
 COPY ["WebApi/WebApi.csproj", "WebApi/"]
 COPY ["GameCore/GameCore.csproj", "GameCore/"]
-COPY ["GameDigger/GameDigger.csproj", "GameDigger/"]
-COPY ["Common/Common.csproj", "Common/"]
 COPY ["SnakeGame2/SnakeGame2.csproj", "SnakeGame2/"]
+COPY ["Common/Common.csproj", "Common/"]
 RUN dotnet restore "WebApi/WebApi.csproj"
 COPY . .
 WORKDIR "/src/WebApi"

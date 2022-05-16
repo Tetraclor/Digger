@@ -101,6 +101,7 @@ namespace WebApi
 
                     // создаем объект ClaimsIdentity
                     var id = new ClaimsIdentity(claims, "ApplicationCookie", ClaimTypes.Name, ClaimsIdentity.DefaultRoleClaimType);
+                    UserService.RegisterOrNull(userName, "");
                     // установка аутентификационных куки
                     await context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(id));
                 }

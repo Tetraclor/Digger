@@ -53,9 +53,9 @@ W         WW         W
 WWWWW WWWWWWWWWW WWWWW
 ";
 
-        public SnakeGameService(string mapString = TestMap) : base(mapString, typeof(Snake))
+        public SnakeGameService(int applesCount = 10, string mapString = TestMap) : base(mapString, typeof(Snake))
         {
-            ApplesManager = new ApplesManager(GameState, 10);
+            ApplesManager = new ApplesManager(GameState, applesCount);
 
             var spawnPoints = GameState.Map.GetAllLocations<Spawn>().ToList();
 
