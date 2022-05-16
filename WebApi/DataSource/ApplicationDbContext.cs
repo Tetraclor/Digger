@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System;
+using System.IO;
 
 namespace WebApi.DataSource
 {
@@ -14,8 +15,9 @@ namespace WebApi.DataSource
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            
-            optionsBuilder.UseSqlite("Filename=DataSource/SqLiteDb/SnakeArena.sqlite");
+            var dir = "DataSource/SqLiteDb";
+            Directory.CreateDirectory(dir);
+            optionsBuilder.UseSqlite($"Filename={dir}/SnakeArena.sqlite");
 
             //optionsBuilder.UseSqlite("server=localhost;user=root;password=кщще;database=userdb;",
             //    new MySqlServerVersion(new Version(8, 0, 28)));
