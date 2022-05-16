@@ -28,5 +28,8 @@ jobs:
             host: snakearena.online
             username: root
             key: ${{ secrets.KEY }}
-            script: whoami
-
+            script: |
+                docker build -f WebApi/Dockerfile  --force-rm -t webapi  https://github.com/Tetraclor/SnakeArena1.0.git#main
+                docker container stop webapi
+                docker container rm webapi
+                docker run --name=webapi  -d -p 80:80/tcp webapi

@@ -15,7 +15,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SnakeTests", "SnakeTests\Sn
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SnakeGame2", "SnakeGame2\SnakeGame2.csproj", "{9327AFD6-56A4-46F2-81FE-2E1F5F0A1C92}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SnakeBotClient", "SnakeBotClient\SnakeBotClient.csproj", "{10F79667-F2EC-452D-BC8D-F37213843E0C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SnakeBotClient", "SnakeBotClient\SnakeBotClient.csproj", "{10F79667-F2EC-452D-BC8D-F37213843E0C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7FBA1D1C-7C3D-4236-A76E-ECFF6F3D6ADC}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\main.yml = .github\workflows\main.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
