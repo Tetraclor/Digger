@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
+using System.Text;
 using System.Threading.Tasks;
 using WebApi.DataSource;
 using WebApi.Services;
@@ -116,7 +117,8 @@ namespace WebApi
         {
             var name = $"Гость{random.Next(100000, 999999)}";
             anonimousUserNames.Add(name);
-            return name;
+            var bytes = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(name));
+            return Convert.ToString(name);
         }
     }
 }
