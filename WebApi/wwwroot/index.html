@@ -100,7 +100,8 @@
 </head>
 <body>
     <header>
-        <h3 class="item">SnakeArena Test</h3>
+        <h3 class="item">SnakeArena</h3>
+        <h5 id="build_time" class="item"></h5>
         <div>
             <h4 id="user-name"></h4>
             <button class="item" onclick="show_auth()">Авторизоваться</button>
@@ -190,7 +191,10 @@
     
     <script>
         $(document).ready(function () {
-            console.log("document loaded");
+
+            fetch(`api/assembly`)
+                .then(v => v.text())
+                .then(v => $('#build_time')[0].innerText = v);
 
             hubConnection.start()
                 .then(async function () {

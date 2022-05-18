@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using System.Reflection;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using WebApi.Services;
@@ -12,6 +13,13 @@ namespace WebApi.API
     [ApiController]
     public class AuthController : ControllerBase
     {
+        [Route("assembly")]
+        public IActionResult AssemblyDate()
+        {
+            var buildDateTime = System.IO.File.GetLastWriteTime(Assembly.GetExecutingAssembly().Location);
+            return Ok($"Build time: {buildDateTime.ToShortDateString()} {buildDateTime.ToShortTimeString()}");
+        }
+
         [Route("login")]
         public async Task<ActionResult> Login([FromServices]IHubContext<MainHub> hubContext, [FromQuery]string login, [FromQuery]string password)
         {
