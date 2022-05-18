@@ -117,8 +117,9 @@ namespace WebApi
         {
             var name = $"Гость{random.Next(100000, 999999)}";
             anonimousUserNames.Add(name);
-            var nameConverted = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(name));
-            return nameConverted;
+            var bytes = Encoding.Default.GetBytes(name);
+            name = Encoding.UTF8.GetString(bytes);
+            return name;
         }
     }
 }
