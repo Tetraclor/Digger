@@ -44,8 +44,6 @@ namespace WebApi
 
         public UserAppInfo GetMe()
         {
-            logger.Information("Context: " + Context.UserIdentifier);
-            logger.Information("DB: " + UserService.GetUserOrNull(Context.UserIdentifier).Name);
             return UserService.GetUserOrNull(Context.UserIdentifier);
         }
 
