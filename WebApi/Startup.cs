@@ -120,7 +120,9 @@ namespace WebApi
 
         private string GenerateAnonimousUserName()
         {
-            var name = new string($"Гость{random.Next(100000, 999999)}");
+            logger.Information("Гость");
+            logger.Information($"Гость{random.Next(100000, 999999)}");
+            var name = new string($"Гость100000");
             anonimousUserNames.Add(name);
             var bytes = Encoding.Default.GetBytes(name);
             logger.Information("Create: " + name);
