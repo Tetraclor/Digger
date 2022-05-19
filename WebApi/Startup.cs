@@ -70,12 +70,14 @@ namespace WebApi
     public class AnonymousSessionMiddleware
     {
         private readonly RequestDelegate _next;
+        private readonly ILogger logger;
         private readonly static HashSet<string> anonimousUserNames = new();
 
-        public AnonymousSessionMiddleware(RequestDelegate next, ApplicationDbContext applicationContext)
+        public AnonymousSessionMiddleware(RequestDelegate next, ApplicationDbContext applicationContext, ILogger logger)
         {
             var litst = applicationContext.Users.ToList();
             _next = next;
+            this.logger = logger;
         }
 
         public async Task InvokeAsync(HttpContext context)
@@ -121,6 +123,7 @@ namespace WebApi
             var name = new string($"Гость{random.Next(100000, 999999)}");
             anonimousUserNames.Add(name);
             var bytes = Encoding.Default.GetBytes(name);
+            logger.Information("Create: " + name);
             name = Encoding.UTF8.GetString(bytes);
             return name;
         }

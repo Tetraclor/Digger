@@ -1,12 +1,8 @@
-﻿using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
+﻿using Microsoft.AspNetCore.SignalR;
+using Serilog;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Security.Claims;
 using System.Threading.Tasks;
 using WebApi.Services;
 
@@ -14,8 +10,16 @@ namespace WebApi
 {
     public class MainHub : Hub
     {
+        ILogger logger;
+
+        public MainHub(ILogger logger)
+        {
+            this.logger = logger;
+        }
+
         public void StartGame(GameStartInfo startGameInfo)
         {
+           
             GamesManagerService.CreateGame(startGameInfo);
         }
 
@@ -40,6 +44,8 @@ namespace WebApi
 
         public UserAppInfo GetMe()
         {
+            logger.Information("Context: " + Context.UserIdentifier);
+            logger.Information("DB: " + UserService.GetUserOrNull(Context.UserIdentifier).Name);
             return UserService.GetUserOrNull(Context.UserIdentifier);
         }
 
