@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using Serilog;
 using System.Reflection;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -14,8 +15,9 @@ namespace WebApi.API
     public class AuthController : ControllerBase
     {
         [Route("assembly")]
-        public IActionResult AssemblyDate()
+        public IActionResult AssemblyDate([FromServices]ILogger logger)
         {
+            logger.Information("Auth: Гость");
             var buildDateTime = System.IO.File.GetLastWriteTime(Assembly.GetExecutingAssembly().Location);
             return Ok($"Build time: {buildDateTime.ToShortDateString()} {buildDateTime.ToShortTimeString()}");
         }
