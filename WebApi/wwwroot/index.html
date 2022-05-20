@@ -2,193 +2,168 @@
 <html>
 <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Game Bot Arena</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
     <style>
-        body {
-            height: 100vh;
-            width: 100vw;
-            display: flex;
-			flex-direction: row;
-			
-            justify-content: center;
-            align-items: center;
-            margin: 0;
-            background-color: beige;
-            font-family: Consolas;
-        }
-
-        header {
-            display: flex;
-            flex-direction: row;
-            justify-content: space-between;
-            background-color: gray;
-            position: fixed;
-            top: 0px;
-            width: 100vw;
-        }
-
-        header div {
-            display: flex;
-            align-items: center;
-        }
-
-        header button{
-            height: 70%;
-        }
-
-        #main{
-            display: flex;
-            flex-direction: row-reverse;
-        }
-
-        #nav{
-            display: flex;
-            flex-direction: column;
-            justify-content: space-around;
-            height: 80vh;
-        }
-
-        #auth{
-            display: none;
-            flex-direction: column;
-            position: fixed;
-            background-color: gray;
-            padding: 20px;
-            border-radius: 2px;
-        }
-
-        canvas{
-            background-color: aquamarine;
-        }
-
-        #create-game-box{
-            display: flex;
-            flex-direction: column;
-        }
-
-        .item {
-            margin: 10px;
-        }
-
         .overflow {
             overflow: scroll;
-            max-height: 300px;
+            max-height: 250px;
             overflow-x: hidden;
-            overflow-y:auto;
-        }
-
-        table {
-            font-family: arial, sans-serif;
-            border-collapse: collapse;
-            width: 100%;
-        }
-
-        th{
-           
-        }
-
-        td, th {
-            border: 1px solid #dddddd;
-            text-align: left;
-            padding: 8px;
-        }
-
-        tr:nth-child(even) {
-            background-color: #dddddd;
+            overflow-y: auto;
         }
     </style>
 </head>
 <body>
-    <header>
-        <h3 class="item">SnakeArena</h3>
-        <h5 id="build_time" class="item"></h5>
-        <div>
-            <h4 id="user-name"></h4>
-            <button class="item" onclick="show_auth()">Авторизоваться</button>
+    <header class="p-2">
+        <div class="container">
+            <div class="row d-flex align-items-center justify-content-center justify-content-md-between py-1  border-bottom">
+
+                <a href="/" class="col-12 col-md text-md-start text-center text-decoration-none text-dark">
+                    <img class="me-3" src="logo.png"/>
+                    <span class="h4">SnakeArena</span>
+                </a>
+
+                <ul class="nav col-md-4 justify-content-center">
+                    <li><span id="user-name" class="nav-link px-2 text-black">Login</span></li>
+                </ul>
+
+                <div class="col-md-2 text-center">
+                    <button type="button" class="btn" data-bs-toggle="modal" data-bs-target="#authModal">Авторизироваться</button>
+                </div>
+            </div>
         </div>
     </header>
 
-    <div id="main">
-        <div class="item overflow">
-            <table id="members" class="">
-                <caption> Участники </caption>
-                <tr>
-                    <th>Игрок</th>
-                    <th>Рейтинг</th>
-                    <th></th>
-                </tr>
-            </table>
-        </div>
-        <div id="create-game-box" class="item">
-            <h2 class="item">Создание игры</h2>
-            <div class="item">
-                <span>Тиков до конца игры:</span>
-                <input type="number" id="ticks-to-end" class="nav-item" value="1000" />
-            </div>
-            <div class="item">
-                <span>Кол-во яблок:</span>
-                <input type="number" id="apples-count" class="nav-item" value="10" />
-            </div>
-
-            <div class="item">
-                <span>Выбор карты:</span>
-                <select id="map-choise" onchange="draw_map()">
-                </select>
-            </div>
-            <canvas id="map-canvas"></canvas>
-            <div class="item">
-                <p>Количество копий запусков (для тестирования)</p>
-                <input type="number"  id="game-copy" class="nav-item" value="1" />
-                <button onclick="create_copies_game()">СОЗДАТЬ ИГРУ</button>
-            </div>
-        </div>
-            
-        <div id="nav" class="item">
-            <div class="overflow">
-                <table id="players" class="overflow">
-                    <caption>
-                        Список игроков
-                    </caption>
-                    <tr>
-                        <th>Игрок</th>
-                        <th>Рейтинг</th>
-                        <th>Вызов</th>
-                    </tr>
-                </table>
-            </div>
-
-            <div class="overflow">
-                <table id="games">
-                    <caption>
-                        Список идущих игр
-                    </caption>
-                    <tr>
-                        <th>Игра</th>
-                        <th>Карта</th>
-                        <th>Игроки</th>
-                        <th>Состояние</th>
-                        <th></th>
-                    </tr>
-                </table>
-            </div>
-
-            <div id="message-box">
-
+    <!-- Modal -->
+    <div class="modal fade" id="authModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Авторизация</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <span class="form-label">Имя</span><input class="form-control mb-3" id="login" type="text" value="TestUser" />
+                    <span class="form-label">Пароль</span><input class="form-control mb-3" id="password" type="password" value="0" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="login()">Авторизоваться</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="reg()">Зарегестрироваться</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <div id="auth" hidden>   
-        <span>Имя</span><input class="item" id="login" type="text" value="TestUser" />
-        <span>Пароль</span><input class="item" id="password" type="password" value="0" />
-        <button class="item" onclick="login();">Авторизоваться</button>
-        <button class="item" onclick="reg();">Зарегисрироваться</button>
-    </div>
 
+    <!-- Content -->
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12 me-5 col-lg-5">
+                <nav class="">
+                    <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                        <button class="nav-link active" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home" type="button" role="tab" aria-controls="nav-home" aria-selected="true">
+                            Игроки
+                        </button>
+                        <button class="nav-link" id="nav-profile-tab" data-bs-toggle="tab" data-bs-target="#nav-profile" type="button" role="tab" aria-controls="nav-profile" aria-selected="false">
+                            Игры
+                        </button>
+                    </div>
+                </nav>
+                <div class="tab-content" id="nav-tabContent">
+                    <div class="tab-pane fade overflow show active" style="max-height:500px" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
+                        <table id="players" class="table">
+                            <caption class="text-center">
+                                Список игроков
+                            </caption>
+                            <tr>
+                                <th scope="col">Игрок</th>
+                                <th scope="col">Рейтинг</th>
+                                <th scope="col">Вызов</th>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="tab-pane fade overflow" style="max-height:500px" id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab">
+                        <table id="games" class="table">
+                            <caption class="text-center">
+                                Список идущих игр
+                            </caption>
+                            <tr>
+                                <th scope="col">Игра</th>
+                                <th scope="col">Карта</th>
+                                <th scope="col">Игроки</th>
+                                <th scope="col">Состояние</th>
+                                <th scope="col"></th>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="create-game col-12 col-lg">
+                <h2 class="mb-3">Создание игры</h2>
+
+                <div class="row">
+                    <div class="col-6">
+
+                        <form>
+                            <div class="row mb-3">
+                                <label class="form-label col-6">Макс. тиков:</label>
+                                <div class="col">
+                                    <input class="form-control" type="number" id="ticks-to-end" value="1000" />
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <label class="form-label col-6">Кол-во яблок:</label>
+                                <div class="col">
+                                    <input class="form-control" type="number" id="apples-count" value="10" />
+                                </div>
+
+                            </div>
+       
+                        </form>
+
+                        <div class="item mb-3">
+                            <p class="form-label">Количество копий запусков (для тестирования)</p>
+                            <input type="number" id="game-copy" class="form-control mb-3" value="1" />
+                            <button class="form-control" onclick="create_copies_game()">СОЗДАТЬ ИГРУ</button>
+                        </div>
+
+                        <div class="item overflow">
+                            <table id="members" class="table">
+                                <caption class="text-center"> Участники </caption>
+                                <tr>
+                                    <th scope="col">Игрок</th>
+                                    <th scope="col">Рейтинг</th>
+                                    <th scope="col"></th>
+                                </tr>
+                            </table>
+                        </div>
+
+                    </div>
+
+                    <div class="col-6">
+                        <div class="row mb-3">
+                            <label class="form-label col-5">Выбор карты:</label>
+                            <div class="col">
+                                <select class="form-select" id="map-choise" onchange="draw_map()"> </select>
+                            </div>
+                        </div>
+                        <canvas id="map-canvas"></canvas>
+                    </div>
+                    
+
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2" crossorigin="anonymous"></script>
     <script src="js/signalr/dist/browser/signalr.min.js"></script>
     <script src="js/draw.js"></script>
     <script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
-    
+
     <script>
         $(document).ready(function () {
 
@@ -208,20 +183,6 @@
         });
 
         window.members = [];
-
-        function show_auth() {
-            form = $('#auth')[0];
-          
-            form.hidden = false;
-            form.style.display = 'flex';
-        }
-
-        function hide_auth() {
-            form = $('#auth')[0];
-           
-            form.hidden = true;
-            form.style.display = 'none';
-        }
 
         async function login() {
             var login = $('#login')[0].value;
@@ -249,7 +210,7 @@
                 show_error(answer);
                 return;
             }
-            
+
             location.reload();
         }
 
@@ -265,16 +226,16 @@
             var rate = r[1].innerText;
             var index = members.push({ name: player, row: row, index: members.length }) - 1;
             row.innerHTML = (`<td>${player}</td>
-                        <td>${rate}</td>
-                        <td><button onclick="exclude_game(${index})">Исключить</button></td>`);
+                                <td>${rate}</td>
+                                <td><button onclick="exclude_game(${index})">Исключить</button></td>`);
         }
 
         function join_game() {
 
             var index = members.push({ name: player, row: row, index: members.length }) - 1;
             row.innerHTML = (`<td>${player}</td>
-                        <td>${rate}</td>
-                        <td><button onclick="exclude_game(${index})">Исключить</button></td>`);
+                                <td>${rate}</td>
+                                <td><button onclick="exclude_game(${index})">Исключить</button></td>`);
         }
 
         function exclude_game(index) {
@@ -348,10 +309,10 @@
                 var startGameInfo = info.startGameInfo;
                 console.log(info);
                 row.innerHTML = `<td>Snake</td >
-                        <td>${startGameInfo.mapName}</td>
-                        <td>${startGameInfo.players}</td>
-                        <td>${get_game_state(info)}</td>
-                        <td><a href="game.html?game_id=${startGameInfo.gameId}">Смотреть</a></td>`;
+                                <td>${startGameInfo.mapName}</td>
+                                <td>${startGameInfo.players}</td>
+                                <td>${get_game_state(info)}</td>
+                                <td><a href="game.html?game_id=${startGameInfo.gameId}">Смотреть</a></td>`;
             }
 
             console.log(games);
@@ -368,9 +329,9 @@
                 var row = table.insertRow();
                 var player = players[i];
                 row.innerHTML = `
-                        <td>${player.name}</td>
-                        <td>${player.rate}</td>
-                        <td><button onclick="onclick_join_game(this)">Вызвать</button></td>`;
+                                <td>${player.name}</td>
+                                <td>${player.rate}</td>
+                                <td><button onclick="onclick_join_game(this)">Вызвать</button></td>`;
             }
 
             console.log(players);
