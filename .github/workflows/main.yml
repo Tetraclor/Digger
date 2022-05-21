@@ -29,7 +29,7 @@ jobs:
             username: root
             key: ${{ secrets.KEY }}
             script: |
-                docker build -f WebApi/Dockerfile -v /webapi_db:/app/DataSource/SqLiteDb -t webapi  https://github.com/Tetraclor/SnakeArena1.0.git#main
+                docker build -f WebApi/Dockerfile -t webapi  https://github.com/Tetraclor/SnakeArena1.0.git#main
                 docker container stop webapi
                 docker container rm webapi
-                docker run --name=webapi  -d -p 80:80/tcp webapi
+                docker run --name=webapi -v /webapi_db:/app/DataSource/SqLiteDb -d -p 80:80/tcp webapi
