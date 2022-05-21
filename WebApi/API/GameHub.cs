@@ -1,6 +1,7 @@
 ﻿using Common;
 using GameCore;
 using Microsoft.AspNetCore.SignalR;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +17,22 @@ namespace WebApi
         public GameHub(IHubContext<GameHub> hubContext)
         {
             this.hubContext = hubContext;
+        }
+
+        public override Task OnConnectedAsync()
+        {
+            return base.OnConnectedAsync();
+        }
+
+        public override Task OnDisconnectedAsync(Exception exception)
+        {
+            var user = UserService.GetUserOrNull(Context.UserIdentifier);
+
+            user.UserPlayerConnections.Where(v => v.ConnectionId == Context.ConnectionId)
+                .ToList()
+                .ForEach(v => v.ConnectionId = null);
+
+            return base.OnDisconnectedAsync(exception);
         }
 
         public bool SendTurn(string command)

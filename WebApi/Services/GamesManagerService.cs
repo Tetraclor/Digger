@@ -117,8 +117,12 @@ namespace WebApi.Services
                 return;
 
             var userPlayerConnections = UserService.GetUserOrNull(userName).UserPlayerConnections;
+
             var connected = userPlayerConnections
                 .FirstOrDefault(x => x.GameId == gameId && x.IsConnected == false);
+
+            if (connected == null)
+                return;
 
             var userPlayerConnection = new UserPlayerConnection()
             {
