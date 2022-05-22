@@ -12,7 +12,7 @@ namespace WinFormsGameView
     public class GameWindow : Form
     {
        // private GameService gameService = new DiggerGameService(DiggerGameService.mapWithPlayerTerrain);
-        private GameService gameService = new SnakeGame2.SnakeGameService();
+        private GameService gameService = new SnakeGame2.SnakeGameService(null);
         //private GameService gameService = new SnakeGameService(SnakeGameService.TestMap);
 
         private readonly HashSet<Keys> pressedKeys = new HashSet<Keys>();
@@ -40,7 +40,7 @@ namespace WinFormsGameView
             SnakeMapAnimate();
 
             InitSizeGame();
-            InitForm(gameService.GameState.MapWidth, gameService.GameState.MapHeight);
+            InitForm(gameService.GameBoard.MapWidth, gameService.GameBoard.MapHeight);
             StartGame(TickHandler, GameTick);
         }
 
@@ -58,7 +58,7 @@ namespace WinFormsGameView
 
         void WithMapAnimate()
         {
-            AnimationManager = new MapAnimationManager(() => gameService.GameState.Map);
+            AnimationManager = new MapAnimationManager(() => gameService.GameBoard.Map);
             TickHandler = LocalGameMapAnimateTimerTick;
         }
 
@@ -67,7 +67,7 @@ namespace WinFormsGameView
             AnimationManager = new SnakeAnimationManager(
                 (v) =>
                     {
-                        v.Map = gameService.GameState.Map;
+                        v.Map = gameService.GameBoard.Map;
                         var snakeGameService = (SnakeGame2.SnakeGameService)gameService;
                         var snakes = snakeGameService.SnakeSpawners
                             .Where(v => v.IsActive)
@@ -90,8 +90,8 @@ namespace WinFormsGameView
 
         void InitSizeGame()
         {
-            MapWidth = gameService.GameState.MapWidth;
-            MapHeight = gameService.GameState.MapHeight;
+            MapWidth = gameService.GameBoard.MapWidth;
+            MapHeight = gameService.GameBoard.MapHeight;
         }
 
         void InitForm(int MapWidth, int MapHeight) 

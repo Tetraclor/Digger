@@ -18,7 +18,7 @@ namespace Common
     {
         public static CreatureCommand NoneCommand = new();
 
-        public static bool IsInBound(this CreatureCommand command, GameState game, int x, int y)
+        public static bool IsInBound(this CreatureCommand command, GameBoard game, int x, int y)
         {
             return !(x + command.DeltaX < 0 ||
                      x + command.DeltaX >= game.MapWidth ||
@@ -26,7 +26,7 @@ namespace Common
                      y + command.DeltaY >= game.MapHeight);
         }
 
-        public static bool IsInBound(this Point point, GameState game)
+        public static bool IsInBound(this Point point, GameBoard game)
         {
             return !(point.X < 0 ||
                      point.X >= game.MapWidth ||
@@ -43,7 +43,7 @@ namespace Common
                      point.Y >= game.MapHeight);
         }
 
-        public static CreatureCommand TorSpace(this CreatureCommand command, GameState game, int x, int y)
+        public static CreatureCommand TorSpace(this CreatureCommand command, GameBoard game, int x, int y)
         {
             if (command.IsInBound(game, x, y) == false)
             {
@@ -120,7 +120,7 @@ namespace Common
             yield return point.PointWithDir(FourDirMove.Down);
         }
 
-        public static Point TorSpace(this Point point, GameState game)
+        public static Point TorSpace(this Point point, GameBoard game)
         {
             if (point.IsInBound(game) == false)
             {

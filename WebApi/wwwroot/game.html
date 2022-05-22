@@ -120,7 +120,9 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2" crossorigin="anonymous"></script>
     <script src="js/signalr/dist/browser/signalr.min.js"></script>
+    <script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
     <script src="js/draw.js"></script>
+    <script src="js/common.js"></script>
 
     <script>
         var bot;
@@ -161,17 +163,25 @@
             .withUrl("/game")
             .build();
 
-        hubConnection.on("Receive", async function (data, tick, playrs_info) {
+        hubConnection.on("Receive", async function (game) {
+            var map = game.map;
+            var tick = game.tick;
+            var playrs_info = game.playersScores;
+            var gameState = game.gameState;
+
             var command = bot_act();
             await hubConnection.invoke("SendTurn", command);
+
             document.getElementById("tick").innerText = tick;
-            var canvas = document.getElementById('canvas');
+
             update_scores(playrs_info);
-            await draw_board(canvas, data, 700, 700);
+
+            await draw_board(document.getElementById('canvas'), game, 700, 700);
         });
 
         hubConnection.start()
-            .then(() => start_game()); // Для быстрого тестирования
+            .then(async () => await update_my())
+            .then(() => start_game()) // Для быстрого тестирования
 
 
         function start_game() {
@@ -205,8 +215,8 @@
             for (var i = table.rows.length; i < playrs_info.length + 1; i++) {
                 var row = table.insertRow();
                 row.innerHTML = `<td></td>
-                                        <td></td>
-                                        <td align="right"></td>`;
+                                            <td></td>
+                                            <td align="right"></td>`;
             }
 
             for (var i = 0; i < playrs_info.length; i++) {

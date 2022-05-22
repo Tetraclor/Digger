@@ -145,6 +145,7 @@ namespace WebApi.Services
             var snakeGame = new AnimateSnakeGameService
             (
                 (gameService) => null,
+                (player) => PlayerNames.GetValueOrDefault(player),
                 startGameInfo.ApplesCount,
                 MapService.GetMap(startGameInfo.MapName).Map
             );

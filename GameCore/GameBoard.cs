@@ -6,18 +6,18 @@ using System.Threading.Tasks;
 
 namespace GameCore
 {
-    public class GameState
+    public class GameBoard
     {
         public readonly ICreature[,] Map;
 
         public int MapWidth { get; private set; }
         public int MapHeight { get; private set; }
 
-        public GameState()
+        public GameBoard()
         {
         }
 
-        public GameState(ICreature[,] map)
+        public GameBoard(ICreature[,] map)
         {
             Map = map;
             MapWidth = Map.GetLength(0);

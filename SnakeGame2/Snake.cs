@@ -47,7 +47,7 @@ namespace SnakeGame2
 
         public FourDirMove PrevMove = FourDirMove.Right;
 
-        public void Move(FourDirMove move, GameState gameState)
+        public void Move(FourDirMove move, GameBoard gameState)
         {
             if (IsDead) return;
 

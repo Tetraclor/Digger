@@ -7,11 +7,11 @@ namespace SnakeGame2
     public class ApplesManager : IMapAble
     {
         private Random Random = new Random();
-        private GameState gameState;
+        private GameBoard gameState;
         public int MaxApplesCount { get; private set; }
         public HashSet<Point> apples = new HashSet<Point>();
 
-        public ApplesManager(GameState gameState, int applesCount)
+        public ApplesManager(GameBoard gameState, int applesCount)
         {
             MaxApplesCount = applesCount;
             this.gameState = gameState;
@@ -22,7 +22,7 @@ namespace SnakeGame2
             }
         }
 
-        public ApplesManager(GameState gameState, params Point[] apples)
+        public ApplesManager(GameBoard gameState, params Point[] apples)
         {
             this.gameState = gameState;
 

@@ -7,10 +7,10 @@ namespace SnakeGame2
 {
     public class SnakeGameStateForPlayer : ISnakeGameStateForPlayer
     {
-        private GameState gameState;
+        private GameBoard gameState;
         private Snake snakePlayer;
 
-        public SnakeGameStateForPlayer(GameState gameState, Snake snakePlayer)
+        public SnakeGameStateForPlayer(GameBoard gameState, Snake snakePlayer)
         {
             this.gameState = gameState;
             this.snakePlayer = snakePlayer;

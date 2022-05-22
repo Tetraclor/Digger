@@ -2,6 +2,7 @@
 using GameCore;
 using Microsoft.AspNetCore.SignalR;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using WebApi.Services;
@@ -90,14 +91,35 @@ namespace WebApi
             var playersScores = GamesManagerService.GetPlayerInfos(gameId);
             var stringMap = gameService.ToStringMap();
 
-            hubContext.Clients.Group(gameId).SendAsync("Receive", stringMap, gameService.CurrentTick, playersScores);
+            var gameStateView = new GameStateView()
+            {
+                Map = stringMap,
+                Tick = gameService.CurrentTick,
+                PlayersScores = playersScores,
+                GameState = gameService.GameState, 
+            };
+
+            hubContext.Clients.Group(gameId).SendAsync("Receive", gameStateView);
 
             gameService.MakeGameTick();
+        }
+
+        public UserAppInfo GetMe()
+        {
+            return UserService.GetUserOrNull(Context.UserIdentifier);
         }
 
         public AnimationInfo GetAnimateInfo()
         {
             return AnimationInfo.Instanse;
         }
+    }
+
+    public class GameStateView
+    {
+        public string Map { get; set; }
+        public int Tick { get; set; }
+        public List<GamesManagerService.PlayerInfo> PlayersScores { get; set; }
+        public object GameState { get; set; }
     }
 }

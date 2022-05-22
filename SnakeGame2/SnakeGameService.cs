@@ -16,17 +16,18 @@ namespace SnakeGame2
         List<ITransformAble> transforms = new();
         List<IMapAble> mapAble = new();
 
-        public int MapWidth => GameState.MapWidth;
-        public int MapHeight => GameState.MapHeight;
+        public int MapWidth => GameBoard.MapWidth;
+        public int MapHeight => GameBoard.MapHeight;
 
         public int EatAppleScore = 10;
         public int DeathScore = -10;
 
-        public SnakeGameService(int width, int height) : base(width, height, typeof(Snake))
+        public SnakeGameService(int width, int height, Func<IPlayer, string> getNamePlayer) : base(width, height, typeof(Snake))
         {
-            ApplesManager = new ApplesManager(GameState, 10);
+            ApplesManager = new ApplesManager(GameBoard, 10);
             WallManager = new NotWalkableManager();
             Init();
+            this.getNamePlayer = getNamePlayer;
         }
 
         public const string TestMap = @"
@@ -52,17 +53,19 @@ S         WW         S
 W         WW         W
 WWWWW WWWWWWWWWW WWWWW
 ";
+        private readonly Func<IPlayer, string> getNamePlayer;
 
-        public SnakeGameService(int applesCount = 10, string mapString = TestMap) : base(mapString, typeof(Snake))
+        public SnakeGameService(Func<IPlayer, string> getNamePlayer, int applesCount = 10, string mapString = TestMap) : base(mapString, typeof(Snake))
         {
-            ApplesManager = new ApplesManager(GameState, applesCount);
+            ApplesManager = new ApplesManager(GameBoard, applesCount);
 
-            var spawnPoints = GameState.Map.GetAllLocations<Spawn>().ToList();
+            var spawnPoints = GameBoard.Map.GetAllLocations<Spawn>().ToList();
 
-            WallManager = new NotWalkableManager(GameState.Map.GetAllLocations<Wall>(), spawnPoints);
+            WallManager = new NotWalkableManager(GameBoard.Map.GetAllLocations<Wall>(), spawnPoints);
 
             SnakeSpawners = spawnPoints.Select(v => new SnakeSpawner(v)).ToList();
             Init();
+            this.getNamePlayer = getNamePlayer;
         }
 
         private void Init()
@@ -100,7 +103,7 @@ WWWWW WWWWWWWWWW WWWWW
 
         private FourDirMove GetSnakeMove(IPlayer player, Snake snake)
         {
-            var playerCommand = (PlayerCommand)player.GetCommand( new SnakeGameStateForPlayer(this.GameState, snake));
+            var playerCommand = (PlayerCommand)player.GetCommand( new SnakeGameStateForPlayer(this.GameBoard, snake));
             var move = FourDirMove.None;
 
             if (playerCommand != null)
@@ -133,7 +136,7 @@ WWWWW WWWWWWWWWW WWWWW
                 if (snake.IsDead == false)
                 {
                     var move = GetSnakeMove(snakeSpawner.Player, snake);
-                    snake.Move(move, GameState);// State Points Change
+                    snake.Move(move, GameBoard);// State Points Change
                 }
 
                 // ------ Handle Conflict --------
@@ -203,15 +206,36 @@ WWWWW WWWWWWWWWW WWWWW
                     }
                 }
             }
+
+            GameState = new SnakeGameStateDto()
+            {
+                ApplesPositions = ApplesManager.apples.ToList(),
+                WallsPositions = WallManager.Walls.ToList(),
+                SpawnersPositions = WallManager.Spawns.ToList(),
+                Snakes = SnakeSpawners
+                            .Where(v => v.IsActive)
+                            .Select(v => new SnakeGameStateDto.SnakeDto()
+                            {
+                                HeadPosition = v.SpawnedSnake.Head,
+                                BodyPositions = v.SpawnedSnake.Body.ToList(),
+                                PlayerOwner = new SnakeGameStateDto.PlayerDto()
+                                {
+                                    SpawnerPosition = v.Point,
+                                    Score = GetScore(v.Player),
+                                    Name = getNamePlayer(v.Player),
+                                }
+                            })
+                            .ToList(),
+            };
         }
 
         private void ClearMap()
         {
-            for (int i = 0; i < GameState.MapHeight; i++)
+            for (int i = 0; i < GameBoard.MapHeight; i++)
             {
-                for (int j = 0; j < GameState.MapWidth; j++)
+                for (int j = 0; j < GameBoard.MapWidth; j++)
                 {
-                    GameState.Map[j, i] = null;
+                    GameBoard.Map[j, i] = null;
                 }
             }
         }
@@ -220,13 +244,13 @@ WWWWW WWWWWWWWWW WWWWW
         {
             foreach (var item in mapAble)
             {
-                item.SetToMap(GameState.SetCreature);
+                item.SetToMap(GameBoard.SetCreature);
             }
         }
 
         public ICreature GetCreatureOrNull(Point point)
         {
-            return GameState.GetCreatureOrNull(point);
+            return GameBoard.GetCreatureOrNull(point);
         }
 
         public override bool RemovePlayer(IPlayer player)
@@ -244,11 +268,6 @@ WWWWW WWWWWWWWWW WWWWW
     /// </summary>
     public class SnakeGameStateDto
     {
-        // Общая информация
-        public int Tick { get; set; }
-        public int EndTick { get; set; }
-        public int Width { get; set; }
-        public int Height { get; set; }
 
         // Игровая информация
         // Змейки, спавнеры, стены, яблоки

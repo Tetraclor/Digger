@@ -26,11 +26,8 @@ async function draw_board(canvas, data, maxw = 500, maxh=500) {
     }
 
     var images = window.images;
-
-    var ctx = canvas.getContext('2d');
+    var rows = data.map.split('\n');
     var size = 32;
-
-    var rows = data.split('\n');
 
     var w = Math.max(...rows.map(v => v.length)) * size;
     var h = rows.length * size;
@@ -41,6 +38,8 @@ async function draw_board(canvas, data, maxw = 500, maxh=500) {
 
     canvas.width = w * scale;
     canvas.height = h * scale;
+
+    var ctx = canvas.getContext('2d');
 
     ctx.fillStyle = "rgb(0,0,0)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -54,5 +53,14 @@ async function draw_board(canvas, data, maxw = 500, maxh=500) {
             if (image === undefined) continue;
             ctx.drawImage(image, x * size, y * size);
         }
+    }
+
+    ctx.fillStyle = "rgb(250,250,250)";
+    var snakes = data.gameState.snakes;
+    for (var i = 0; i < snakes.length; i++) {
+        var snake = snakes[i];
+        var pos = snake.headPosition;
+        var playerName = snake.playerOwner.name;
+        ctx.fillText(playerName, pos.x * size, pos.y * size);
     }
 }

@@ -44,7 +44,11 @@ namespace WebApi
             }
         }
 
-        public AnimateSnakeGameService(Func<SnakeGameService, Snake> getUserSnake, int applesCount, string mapString) : base(applesCount, mapString)
+        public AnimateSnakeGameService(
+            Func<SnakeGameService, Snake> getUserSnake,
+            Func<IPlayer, string> getPlayerName, 
+            int applesCount, 
+            string mapString) : base(getPlayerName, applesCount, mapString)
         {
             GetUserSnake = getUserSnake;
         }
@@ -53,9 +57,9 @@ namespace WebApi
 
         public override string ToStringMap()
         {
-            var w = GameState.MapWidth;
-            var h = GameState.MapHeight;
-            var map = GameState.Map;
+            var w = GameBoard.MapWidth;
+            var h = GameBoard.MapHeight;
+            var map = GameBoard.Map;
 
             var stringBuilder = new StringBuilder();
 
@@ -115,8 +119,8 @@ namespace WebApi
                 return;
             }
 
-            var w = GameState.MapWidth;
-            var h = GameState.MapHeight;
+            var w = GameBoard.MapWidth;
+            var h = GameBoard.MapHeight;
 
             var tail = snakePoints.Last();
             draw($"HeadSnake-{head.ToDirWithTorSpave(snakePoints[1], w, h)}", head);
