@@ -39,7 +39,7 @@ namespace WebApi
 
             app.UseSerilogRequestLogging();
             
-            app.UseHttpsRedirection();
+           // app.UseHttpsRedirection();
 
             app.UseDefaultFiles();
             app.UseStaticFiles();
