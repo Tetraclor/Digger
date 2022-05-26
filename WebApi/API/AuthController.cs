@@ -18,7 +18,7 @@ namespace WebApi.API
         public IActionResult AssemblyDate([FromServices]ILogger logger)
         {
             var buildDateTime = System.IO.File.GetLastWriteTime(Assembly.GetExecutingAssembly().Location);
-            return Ok($"Build time: {buildDateTime.ToShortDateString()} {buildDateTime.ToShortTimeString()}");
+            return Ok($"Last Build: {buildDateTime.ToShortDateString()} {buildDateTime.ToShortTimeString()}");
         }
 
         [Route("login")]

@@ -13,7 +13,7 @@ namespace SnakeBotClient
 
     public class ClientSignalR
     {
-        public string ServerUrl { get; set; } = "https://localhost:5001";
+        public string ServerUrl { get; set; } = "http://www.snakearena.online/";
 
         HubConnection connection;
 

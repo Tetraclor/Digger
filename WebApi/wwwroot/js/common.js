@@ -36,3 +36,24 @@ async function update_my() {
 function show_error(msg) {
     alert(msg);
 }
+
+async function copy_token(buttonElement) {
+    var token = await hubConnection.invoke("GetMyToken");
+
+    if (token) {
+        navigator.clipboard.writeText(token)
+            .then(() => {
+                console.log("Token Copied");
+                if (buttonElement.innerText !== 'Скопировано!') {
+                    const originalText = buttonElement.innerText;
+                    buttonElement.innerText = 'Скопировано!';
+                    setTimeout(() => {
+                        buttonElement.innerText = originalText;
+                    }, 1500);
+                }
+            })
+            .catch(err => {
+                console.log('Something went wrong', err);
+            })
+    }
+}
