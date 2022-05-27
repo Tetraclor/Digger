@@ -31,6 +31,10 @@ async function reg() {
 async function update_my() {
     var myPlayer = await hubConnection.invoke("GetMe");
     $('#user-name')[0].innerText = `${myPlayer.name}   ${myPlayer.rate}`;
+    
+}
+
+async function update_my_token() {
     $('#token')[0].value = await hubConnection.invoke("GetMyToken");
 }
 

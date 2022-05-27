@@ -207,7 +207,7 @@
                                 <select class="form-select" id="map-choise" onchange="draw_map()"> </select>
                             </div>
                         </div>
-                        <canvas id="map-canvas"></canvas>
+                        <canvas class="" style="" id="map-canvas"></canvas>
                     </div>
 
                 </div>
@@ -245,6 +245,7 @@
                 .then(async function () {
                     await update_maps();
                     await info_update();
+                    await update_my_token();
                     await setInterval(info_update, 4000);
                 });
         });
