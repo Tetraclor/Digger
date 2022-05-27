@@ -23,8 +23,9 @@ namespace SnakeBotClient
         private readonly string token;
         private readonly Func<IPlayer> createPlayer;
 
-        public ClientSignalR(string token, Func<IPlayer> createPlayer)
+        public ClientSignalR(string url, string token, Func<IPlayer> createPlayer)
         {
+            ServerUrl = url;
             connection = new HubConnectionBuilder()
                 .WithUrl($"{ServerUrl}/bots", opt => {
                     opt.Headers.Add("bot_token", token);

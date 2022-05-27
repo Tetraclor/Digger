@@ -38,6 +38,15 @@ async function update_my_token() {
     $('#token')[0].value = await hubConnection.invoke("GetMyToken");
 }
 
+function show_token() {
+    var x = document.getElementById("token");
+    if (x.type === "password") {
+        x.type = "text";
+    } else {
+        x.type = "password";
+    }
+}
+
 function show_error(msg) {
     alert(msg);
 }

@@ -96,8 +96,9 @@
                 </div>
                 <div class="modal-body">
                     <span class="form-label me-3 mb-3">Токен бота:</span>
-                    <input type="password" class="form-label" id="token" readonly/>
-                    <button type="button" class="btn"  onclick="copy_token(this)">Скопировать</button>
+                    <input type="password" class="form-label me-3" id="token" readonly />
+                    <input type="checkbox" class="checkbox" onclick="show_token()"/>Показать
+                    <!--<button type="button" class="btn"  onclick="copy_token(this)">Скопировать</button>-->
                     <br />
                     <span class="form-label me-3">Статус бота:</span><span class="form-label" id="bot-status">TODO</span>
                 </div>
