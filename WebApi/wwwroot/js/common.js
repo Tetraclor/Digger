@@ -31,6 +31,7 @@ async function reg() {
 async function update_my() {
     var myPlayer = await hubConnection.invoke("GetMe");
     $('#user-name')[0].innerText = `${myPlayer.name}   ${myPlayer.rate}`;
+    $('#token')[0].value = await hubConnection.invoke("GetMyToken");
 }
 
 function show_error(msg) {
@@ -41,19 +42,30 @@ async function copy_token(buttonElement) {
     var token = await hubConnection.invoke("GetMyToken");
 
     if (token) {
-        navigator.clipboard.writeText(token)
-            .then(() => {
-                console.log("Token Copied");
-                if (buttonElement.innerText !== 'Скопировано!') {
-                    const originalText = buttonElement.innerText;
-                    buttonElement.innerText = 'Скопировано!';
-                    setTimeout(() => {
-                        buttonElement.innerText = originalText;
-                    }, 1500);
-                }
-            })
-            .catch(err => {
-                console.log('Something went wrong', err);
-            })
+        // Не работает на сервере, (локально работает)  возможно потому что нет https
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(token)
+                .then(() => {
+                    console.log("Token Copied");
+                    if (buttonElement.innerText !== 'Скопировано!') {
+                        const originalText = buttonElement.innerText;
+                        buttonElement.innerText = 'Скопировано!';
+                        setTimeout(() => {
+                            buttonElement.innerText = originalText;
+                        }, 1500);
+                    }
+                })
+                .catch(err => {
+                    console.log('Something went wrong', err);
+                })
+        } else {
+            var inputElement = document.getElementById("token");
+
+            /* Select the text field */
+            inputElement.select();
+
+            /* Copy the text inside the text field */
+            document.execCommand("copy");
+        }
     }
 }

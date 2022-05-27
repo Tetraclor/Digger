@@ -51,7 +51,7 @@
 
                 <a href="/" class="col-12 col-md text-md-start text-center text-decoration-none text-dark">
                     <img class="me-3" src="logo.png" />
-                    <span class="h4">SnakeArena Hello Andrey! :)</span>
+                    <span class="h4">SnakeArena</span>
                 </a>
 
                 <ul class="nav col-md-4 justify-content-center">
@@ -95,8 +95,9 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <span class="form-label me-2 mb-3">Токен бота:</span>
-                    <button type="button" class="btn"  onclick="copy_token(this)">Скопировать токен бота</button>
+                    <span class="form-label me-3 mb-3">Токен бота:</span>
+                    <input type="password" class="form-label" id="token" readonly/>
+                    <button type="button" class="btn"  onclick="copy_token(this)">Скопировать</button>
                     <br />
                     <span class="form-label me-3">Статус бота:</span><span class="form-label" id="bot-status">TODO</span>
                 </div>
