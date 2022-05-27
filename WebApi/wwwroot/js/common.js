@@ -41,20 +41,22 @@ function show_error(msg) {
 async function copy_token(buttonElement) {
     var token = await hubConnection.invoke("GetMyToken");
 
+    var showCopiedTextInButton = () => {
+        console.log("Token Copied");
+        if (buttonElement.innerText !== 'Скопировано!') {
+            const originalText = buttonElement.innerText;
+            buttonElement.innerText = 'Скопировано!';
+            setTimeout(() => {
+                buttonElement.innerText = originalText;
+            }, 1500);
+        }
+    }
+
     if (token) {
         // Не работает на сервере, (локально работает)  возможно потому что нет https
         if (navigator.clipboard) {
             navigator.clipboard.writeText(token)
-                .then(() => {
-                    console.log("Token Copied");
-                    if (buttonElement.innerText !== 'Скопировано!') {
-                        const originalText = buttonElement.innerText;
-                        buttonElement.innerText = 'Скопировано!';
-                        setTimeout(() => {
-                            buttonElement.innerText = originalText;
-                        }, 1500);
-                    }
-                })
+                .then(() => showCopiedTextInButton())
                 .catch(err => {
                     console.log('Something went wrong', err);
                 })
@@ -66,6 +68,8 @@ async function copy_token(buttonElement) {
 
             /* Copy the text inside the text field */
             document.execCommand("copy");
+
+            showCopiedTextInButton()
         }
     }
 }
