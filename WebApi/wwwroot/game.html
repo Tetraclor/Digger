@@ -239,6 +239,7 @@
 
         var prev_tick_time = 0;
         var tick_ms = 300;
+        var fps_buf = 50;
         const sleep = ms => new Promise(r => setTimeout(r, ms));
 
         hubConnection.on("Receive", async function (game) {
@@ -257,9 +258,9 @@
             var now = Date.now();
             var delta = now - prev_tick_time;
             prev_tick_time = now;
-            console.log(tick_ms - delta);
-
-            await sleep(tick_ms - delta)
+            var timeout = tick_ms + fps_buf - delta
+            console.log(timeout);   
+            await sleep(timeout)
 
             await draw_board(document.getElementById('canvas'), game, (ctx, size) => draw_players_names(game, ctx, size), 700, 700);
         });
