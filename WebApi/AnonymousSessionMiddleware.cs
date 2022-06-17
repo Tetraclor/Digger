@@ -7,7 +7,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
-using System.Text;
 using System.Threading.Tasks;
 using WebApi.DataSource;
 using WebApi.Services;
@@ -22,7 +21,6 @@ namespace WebApi
 
         public AnonymousSessionMiddleware(RequestDelegate next, ApplicationDbContext applicationContext, ILogger logger)
         {
-            var litst = applicationContext.Users.ToList();
             _next = next;
             this.logger = logger;
         }
@@ -35,7 +33,8 @@ namespace WebApi
                 userName = UserService.GetUserOrNull(values.FirstOrDefault())?.Name;
                 if(userName == null)
                 {
-                    throw new Exception("Not found user with token");
+                    throw new MyException("Not found user with token"); // Не работает, просто присылает код ошибки 500
+                    // Не сработает глобальная обработка ошибок (можно поменять только код ошибки, сообщение ошибки так и не пересылается)
                 }    
             }
             else

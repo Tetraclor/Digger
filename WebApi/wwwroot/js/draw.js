@@ -18,10 +18,10 @@
     return images;
 }
 
-async function draw_board(canvas, data, maxw = 500, maxh=500) {
+async function draw_board(canvas, data, callback, maxw = 500, maxh=500) {
 
     if (window.images === undefined) {
-        window.images = await get_images(() => draw_board(canvas, data, maxw, maxh));
+        window.images = await get_images(() => draw_board(canvas, data, callback, maxw, maxh));
         return;
     }
 
@@ -55,16 +55,5 @@ async function draw_board(canvas, data, maxw = 500, maxh=500) {
         }
     }
 
-    
-
-    if (data.gameState) {
-        ctx.fillStyle = "rgb(250,250,250)";
-        var snakes = data.gameState.snakes;
-        for (var i = 0; i < snakes.length; i++) {
-            var snake = snakes[i];
-            var pos = snake.headPosition;
-            var playerName = snake.playerOwner.name;
-            ctx.fillText(playerName, pos.x * size, pos.y * size);
-        }
-    }
+    callback(ctx, size);
 }

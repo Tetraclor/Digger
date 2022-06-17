@@ -28,14 +28,33 @@
 
         #canvas {
             background-color: dimgrey;
-            width: 700px;
-            height: 700px;
+        }
+
+        #codeArea {
+            height: 65%;
+            border-radius: 3px;
+            box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
+        }
+
+            #codeArea .codeflask {
+                width: inherit;
+                height: inherit;
+                border-radius: 3px;
+                opacity: .3;
+            }
+
+                #codeArea .codeflask:hover {
+                    opacity: 1;
+                }
+
+        #codeArea .codeflask::before, #codeArea .codeflask .codeflask__lines {
+            background: #FFF;
         }
 
         @media screen and (max-width: 768px) {
             #canvas {
-                width: 90vw;
-                height: 90vw;
+                width: inherit;
+                height: inherit;
             }
         }
     </style>
@@ -86,43 +105,69 @@
     <!-- Content -->
     <div class="container mt-4">
         <div class="row">
+     
             <div class="col-12 me-5 col-lg-4">
+                <nav class="">
+                    <div class="nav nav-tabs " id="nav-tab" role="tablist">
+                        <button class="nav-link text-black ms-3 active" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home" type="button" role="tab" aria-controls="nav-home" aria-selected="true">
+                            Информация
+                        </button>
+                        <button class="nav-link text-black" id="nav-profile-tab" data-bs-toggle="tab" data-bs-target="#nav-profile" type="button" role="tab" aria-controls="nav-profile" aria-selected="false">
+                            Bot JS
+                        </button>
+                    </div>
+                </nav>
+                <div class="tab-content" id="nav-tabContent">
+                    <div class="tab-pane fade show active" style="max-height:500px" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
+                        <div class="mt-4" id="inputForm">
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="flexSwitchCheckDefault">
+                                <label class="form-check-label" for="flexSwitchCheckDefault">Ручное управление</label>
+                            </div>
+                            <input class="form-control mb-3" type="button" id="startBtn" value="Начать игру" onclick="start_game()" />
+                            <input class="form-control" type="button" id="stopBtn" value="Остановить игру" onclick="stop_game()" />
+                        </div>
 
-                <div class="mt-4" id="inputForm">
-                    <input class="form-control mb-3" type="button" id="startBtn" value="Начать игру" onclick="start_game()" />
-                    <input class="form-control" type="button" id="stopBtn" value="Остановить игру" onclick="stop_game()" />
-                </div>
+                        <div class="ms-2" id="game-info">
+                            <div class="mt-3">
+                                <b>Карта: </b><span id="map-name"></span>
+                            </div>
+                            <div class="mt-3">
+                                <b>Состояние игры: </b><span id="game-state"></span>
+                            </div>
+                            <div class="mt-3">
+                                <b>Ограничение по тикам: </b><span id="ticks-to-end"></span>
+                            </div>
+                            <div class="mt-3">
+                                <b>Кол-во яблок: </b><span id="apples-count"></span>
+                            </div>
+                            <div class="mt-3">
+                                <b>Game Tick: </b><span id="tick" class="">0</span>
+                            </div>
+                        </div>
 
-                <div class="ms-2" id="game-info">
-                    <div class="mt-3">
-                        <b>Карта: </b><span id="map-name"></span>
+                        <div class="mt-3">
+                            <table class="table" id="players" cellspacing="10">
+                                <tr>
+                                    <th scope="col">№</th>
+                                    <th scope="col">Статус</th>
+                                    <th scope="col" align="left">Player Name</th>
+                                    <th scope="col" align="right">Score</th>
+                                </tr>
+                            </table>
+                        </div>
                     </div>
-                    <div class="mt-3">
-                        <b>Состояние игры: </b><span id="game-state"></span>
-                    </div>
-                    <div class="mt-3">
-                        <b>Ограничение по тикам: </b><span id="ticks-to-end"></span>
-                    </div>
-                    <div class="mt-3">
-                        <b>Кол-во яблок: </b><span id="apples-count"></span>
-                    </div>
-                    <div class="mt-3">
-                        <b>Game Tick: </b><span id="tick" class="">0</span>
-                    </div>
-                </div>
+                    <div class="tab-pane fade overflow" style="max-height:500px" id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab">
+                        <input class="form-control mt-3" type="button" value="Вставить код по умолчанию" onclick="set_default_user_code()" />
+                        <input class="form-control mt-3" type="button" value="Обновить бота" onclick="update_user_func()" />
+                        <div class="mt-3 col-10 me-3" id="codeArea"></div>
 
-                <div class="mt-3">
-                    <table class="table" id="players" cellspacing="10">
-                        <tr>
-                            <th scope="col">№</th>
-                            <th scope="col" align="left">Player Name</th>
-                            <th scope="col" align="right">Score</th>
-                        </tr>
-                    </table>
+                    </div>
                 </div>
+               
             </div>
 
-            <div class="col-12 col-lg">
+            <div class="col-12 col-lg mt-3">
                 <canvas id="canvas"></canvas>
             </div>
         </div>
@@ -131,42 +176,61 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2" crossorigin="anonymous"></script>
     <script src="js/signalr/dist/browser/signalr.min.js"></script>
     <script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+    <script src="https://unpkg.com/codeflask/build/codeflask.min.js"></script>
     <script src="js/draw.js"></script>
     <script src="js/common.js"></script>
 
     <script>
-        var bot;
-        var user_command;
 
+        const flask = new CodeFlask('#codeArea',
+            {
+                language: 'js',
+                lineNumbers: true,
+                enableAutocorrect: true,
+            });
+
+        var user_name;
+
+        var user_code = `
+(setStartFunc, setTickFunc) => {
+    // Глобальные переменные
+    var user_command;
+    // Передаем функцию, которая вызовется один раз
+    setStartFunc(() => {
+        // По умолчанию здесь берутся команды со стрелок клавиатуры
         document.addEventListener('keydown', function (e) {
-            if (e.keyCode == '38') {
-                window.user_command = 'up';
-            }
-            else if (e.keyCode == '40') {
-                window.user_command = 'down';
-            }
-            else if (e.keyCode == '37') {
-                window.user_command = 'left';
-            }
-            else if (e.keyCode == '39') {
-                window.user_command = 'right';
-            }
-        });
+            if (e.keyCode == '38') user_command = 'up';
+            else if (e.keyCode == '40') user_command = 'down';
+            else if (e.keyCode == '37') user_command = 'left';
+            else if (e.keyCode == '39') user_command = 'right';
+        })
+    });
+    // Передаем функцию, которая будет вызываться каждый тик
+    setTickFunc((data) => {
+        console.log(user_command)
+        return user_command;
+    });
+}
 
-        async function doimport() {
-            var moduleData = document.getElementById("bot_script");
-            console.log(moduleData);
-            var b64moduleData = "data:text/javascript;base64," + btoa(moduleData);
-            window.bot = await import(b64moduleData);
-            window.bot.tick();
+`
+        function set_default_user_code() {
+            flask.updateCode(user_code);
         }
 
-        function bot_act() {
-            // window.bot.tick();
+        var startFunc = () => { }
+        var tickFunc = () => { }
 
-            var temp = window.user_command;
-            window.user_command = null;
-            return temp;
+        function update_user_func() {
+            var user_func = eval(flask.getCode())
+            user_func((func) => startFunc = func, (func) => tickFunc = func);
+            startFunc();
+        }
+
+        set_default_user_code();
+        update_user_func();
+
+        function bot_act(game) {
+            return tickFunc(game);
         }
 
         const hubConnection = new signalR.HubConnectionBuilder()
@@ -179,15 +243,35 @@
             var playrs_info = game.playersScores;
             var gameState = game.gameState;
 
-            var command = bot_act();
+            var command = bot_act(game);
             await hubConnection.invoke("SendTurn", command);
 
             document.getElementById("tick").innerText = tick;
 
             update_scores(playrs_info);
 
-            await draw_board(document.getElementById('canvas'), game, 700, 700);
+            await draw_board(document.getElementById('canvas'), game, (ctx, size) => draw_players_names(game, ctx, size), 700, 700);
         });
+
+        function draw_players_names(game, ctx, size) {
+            if (game.gameState) {
+                ctx.fillStyle = "rgb(250,250,250)";
+                var snakes = game.gameState.snakes;
+                for (var i = 0; i < snakes.length; i++) {
+                    var snake = snakes[i];
+                    var pos = snake.headPosition;
+                    var playerName = snake.playerOwner.name;
+
+                    if (playerName == userName) {
+                        ctx.fillStyle = "rgb(50, 250, 50)"
+                        ctx.fillText(playerName, pos.x * size, pos.y * size);
+                        ctx.fillStyle = "rgb(250,250,250)";
+                    } else {
+                        ctx.fillText(playerName, pos.x * size, pos.y * size);
+                    }
+                }
+            }
+        }
 
         hubConnection.start()
             .then(async () => await update_my())
@@ -226,6 +310,7 @@
                 var row = table.insertRow();
                 row.innerHTML = `<td></td>
                                             <td></td>
+                                            <td></td>
                                             <td align="right"></td>`;
             }
 
@@ -234,8 +319,9 @@
                 var cells = table.rows[i + 1].children;
 
                 cells[0].innerText = i + 1;
-                cells[1].innerText = info.name;
-                cells[2].innerText = info.score;
+                cells[1].innerText = info.status;
+                cells[2].innerText = info.name;
+                cells[3].innerText = info.score;
             }
         }
 

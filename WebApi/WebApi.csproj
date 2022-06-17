@@ -27,8 +27,4 @@
     <PackageReference Include="Serilog.Sinks.Seq" Version="5.1.1" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="wwwroot\SnakeMaps\" />
-  </ItemGroup>
-
 </Project>

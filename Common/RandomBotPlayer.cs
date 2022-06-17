@@ -70,4 +70,14 @@ namespace Common
             return commands[commandIndex];
         }
     }
+
+    public class MyBot : IPlayer
+    {
+        public IPlayerCommand GetCommand(IGameStateForPlayer gameState)
+        {
+            throw new NotImplementedException();
+
+            /// Кодите здесь пишите логику
+        }
+    }
 }

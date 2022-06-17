@@ -17,6 +17,7 @@ namespace WebApi.Services
         {
             public string Name { get; set; }
             public int Score { get; set; }
+            public string Status { get; set; } = "Offline";
             public Point SnakeHead { get; set; }
             public List<Point> SnakeTail { get; set; }
 
@@ -81,7 +82,7 @@ namespace WebApi.Services
                 var player = spawner.Player;
                 var userName = GetUserNameFromPlayer(player);
                 var score = snakeGame.GetScore(player);
-                var playerInfo = new PlayerInfo(userName, score);
+                var playerInfo = new PlayerInfo(userName, score) {  Status = GetPlayerStatus(userName)};
                 playerInfo.SnakeHead = spawner.SpawnedSnake.Head;
                 playerInfo.SnakeTail = spawner.SpawnedSnake.Body;
 
@@ -94,6 +95,13 @@ namespace WebApi.Services
             {
                 return PlayerNames.TryGetValue(player, out string name) ? name : null;
             };
+
+            static string GetPlayerStatus(string userName)
+            {
+                var user = UserService.GetUserOrNull(userName);
+                if (user == null) return "UserNotFound";
+                return user.IsBotOnline ? "BotOnline" : user.IsUserOnline ? "UserOnline" : "Offline";
+            }
         }
 
         private static IPlayer RegisterPlayerToGame(UserAppInfo userApp, string gameId)
@@ -153,6 +161,7 @@ namespace WebApi.Services
             var gameInfo = new GameProccesInfo();
             gameInfo.GameService = snakeGame;
             gameInfo.StartGameInfo = startGameInfo;
+            gameInfo.GameTickMs = startGameInfo.TickMs;
             Games[startGameInfo.GameId] = gameInfo;
 
             foreach(var userName in startGameInfo.UserNames)

@@ -96,11 +96,15 @@
                 </div>
                 <div class="modal-body">
                     <span class="form-label me-3 mb-3">Токен бота:</span>
-                    <input type="password" class="form-label me-3" id="token" readonly />
-                    <input type="checkbox" class="checkbox" onclick="show_token()"/>Показать
+                    <input type="password" class="form-label me-3" id="token" style="width:240px" readonly />
+                    <input type="checkbox" class="form-check-input mt-2 me-2" onclick="show_token()" /><span>показать</span>
                     <!--<button type="button" class="btn"  onclick="copy_token(this)">Скопировать</button>-->
                     <br />
-                    <span class="form-label me-3">Статус бота:</span><span class="form-label" id="bot-status">TODO</span>
+                    <div class="mb-3">
+                        <span class="form-label me-3">Статус бота:</span><span class="form-label" id="bot-status">TODO</span>
+                    </div>
+                    
+                    <span class="">Включить бота</span><input class="form-check-input ms-3" type="checkbox" id="enable-bot">
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="">Ок</button>
@@ -167,15 +171,21 @@
 
                         <form>
                             <div class="row mb-3">
+                                <label class="form-label col-6">Время тика в мс.:</label>
+                                <div class="col">
+                                    <input class="form-control" type="number" id="tick-ms" value="300" min="10" max="10000"/>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
                                 <label class="form-label col-6">Макс. тиков:</label>
                                 <div class="col">
-                                    <input class="form-control" type="number" id="ticks-to-end" value="1000" />
+                                    <input class="form-control" type="number" id="ticks-to-end" value="1000" min="10" />
                                 </div>
                             </div>
                             <div class="row mb-3">
                                 <label class="form-label col-6">Кол-во яблок:</label>
                                 <div class="col">
-                                    <input class="form-control" type="number" id="apples-count" value="10" />
+                                    <input class="form-control" type="number" id="apples-count" value="10" min="1" max="100"/>
                                 </div>
 
                             </div>
@@ -308,6 +318,8 @@
 
             var ticksToEnd = parseInt($('#ticks-to-end')[0].value);
             var applesCount = parseInt($('#apples-count')[0].value);
+            var tickMs = parseInt($('#tick-ms')[0].value);
+
             console.log(players);
 
             return hubConnection.invoke("StartGame", {
@@ -315,8 +327,8 @@
                 gameId: gameId,
                 applesCount: applesCount,
                 userNames: players,
-                ticksToEnd: ticksToEnd
-
+                ticksToEnd: ticksToEnd,
+                tickMs: tickMs,
             }).then(() => {
                 console.log(open_window);
                 if (open_window)
@@ -394,7 +406,7 @@
         async function draw_map() {
             var stringmap = get_choised_mapinfo().map;
             var map_canvas = document.getElementById("map-canvas");
-            await draw_board(map_canvas, { map: stringmap }, 320, 320);
+            await draw_board(map_canvas, { map: stringmap }, (ctx) => { }, 320, 320);
         }
 
         function makeid(length) {

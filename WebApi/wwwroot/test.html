@@ -1,0 +1,56 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>SnakeArena</title>
+    <style>
+        #codeArea {
+            width: 500px;
+            height: 80px;
+            border-radius: 3px;
+            box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
+        }
+
+            /*#codeArea .codeflask {*/
+         /*       width: inherit;
+                height: inherit;*/
+                /*border-radius: 3px;
+            }*/
+
+                /*#codeArea .codeflask::before, #codeArea .codeflask .codeflask__lines {
+                    background: #FFF;
+                }*/
+    </style>
+</head>
+<body>
+
+
+    <div>
+        <div id="codeArea"></div>
+    </div>
+
+    <script src="https://unpkg.com/codeflask/build/codeflask.min.js"></script>
+
+
+    <script>
+
+        const flask = new CodeFlask('#codeArea',
+            {
+                language: 'js',
+                lineNumbers: true,
+                enableAutocorrect: true,
+            });
+
+        flask.updateCode('const my_new_code_here = "Blabla"');
+        flask.onUpdate((code) => {
+            // do something with code here.
+            // this will trigger whenever the code
+            // in the editor changes.
+            console.log(code);
+        });
+        console.log(flask);
+    </script>
+</body>
+</html>
