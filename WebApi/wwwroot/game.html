@@ -207,7 +207,7 @@
     });
     // Передаем функцию, которая будет вызываться каждый тик
     setTickFunc((data) => {
-        console.log(user_command)
+        //console.log(user_command)
         return user_command;
     });
 }
@@ -225,7 +225,7 @@
             user_func((func) => startFunc = func, (func) => tickFunc = func);
             startFunc();
         }
-
+  
         set_default_user_code();
         update_user_func();
 
@@ -236,6 +236,10 @@
         const hubConnection = new signalR.HubConnectionBuilder()
             .withUrl("/game")
             .build();
+
+        var prev_tick_time = 0;
+        var tick_ms = 300;
+        const sleep = ms => new Promise(r => setTimeout(r, ms));
 
         hubConnection.on("Receive", async function (game) {
             var map = game.map;
@@ -249,6 +253,13 @@
             document.getElementById("tick").innerText = tick;
 
             update_scores(playrs_info);
+
+            var now = Date.now();
+            var delta = now - prev_tick_time;
+            prev_tick_time = now;
+            console.log(tick_ms - delta);
+
+            await sleep(tick_ms - delta)
 
             await draw_board(document.getElementById('canvas'), game, (ctx, size) => draw_players_names(game, ctx, size), 700, 700);
         });
@@ -287,6 +298,8 @@
             document.getElementById('ticks-to-end').innerText = game_info.ticksToEnd;
             document.getElementById('map-name').innerText = game_info.mapName;
             document.getElementById('apples-count').innerText = game_info.applesCount;
+            console.log(game_info)
+            tick_ms = game_info.tickMs;
 
             var get_game_state = (inf) => {
                 if (inf.isOver) return "Заверешена";
