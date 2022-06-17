@@ -32,4 +32,4 @@ jobs:
                 docker build -f WebApi/Dockerfile -t webapi  https://github.com/Tetraclor/SnakeArena1.0.git#main
                 docker container stop webapi
                 docker container rm webapi
-                docker run --name=webapi -v /webapi_db:/app/DataSource/SqLiteDb -d --rm --restart always -p 80:80/tcp -p 443:433 webapi
+                docker run --name=webapi -v /webapi_db:/app/DataSource/SqLiteDb -d --restart always -p 80:80/tcp -p 443:433 webapi
