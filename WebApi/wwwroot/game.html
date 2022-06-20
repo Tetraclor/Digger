@@ -258,7 +258,7 @@
             var now = Date.now();
             var delta = now - prev_tick_time;
             prev_tick_time = now;
-            var timeout = tick_ms + fps_buf - delta
+            var timeout = tick_ms  - delta
             console.log(timeout);   
             await sleep(timeout)
 
